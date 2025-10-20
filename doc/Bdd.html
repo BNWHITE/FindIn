@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modèle de Base de Données FindIn</title>
+    <title>Modèle de Base de Données FindIn - Version Interactive</title>
     <style>
         * {
             margin: 0;
@@ -15,14 +15,16 @@
         body {
             background-color: #f8f9fa;
             color: #333;
-            line-height: 1.5;
+            line-height: 1.4;
             padding: 20px;
             min-height: 100vh;
+            overflow-x: auto;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            position: relative;
         }
         
         header {
@@ -46,8 +48,11 @@
         
         .database-model {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: minmax(200px, auto);
+            gap: 25px;
+            position: relative;
+            z-index: 1;
         }
         
         .table-container {
@@ -55,29 +60,69 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .table-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            z-index: 10;
         }
         
         .table-header {
             background-color: #2c3e50;
             color: white;
-            padding: 12px 15px;
+            padding: 8px 12px;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-header:hover {
+            background-color: #34495e;
+        }
+        
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
         }
         
         .fields {
             padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
         }
         
         .field {
             display: flex;
-            padding: 10px 15px;
+            padding: 6px 12px;
             border-bottom: 1px solid #e9ecef;
-            font-size: 14px;
+            font-size: 12px;
+            position: relative;
         }
         
         .field:last-child {
             border-bottom: none;
+        }
+        
+        .field.pk::before {
+            content: "🔑";
+            margin-right: 5px;
+            font-size: 10px;
+        }
+        
+        .field.fk::before {
+            content: "🔗";
+            margin-right: 5px;
+            font-size: 10px;
         }
         
         .field-name {
@@ -89,25 +134,26 @@
             color: #6c757d;
             font-family: monospace;
             margin-left: 10px;
+            font-size: 11px;
         }
         
         .indexes-section {
-            margin-top: 15px;
-            padding: 12px 15px;
+            margin-top: 8px;
+            padding: 8px 12px;
             background-color: #f8f9fa;
             border-top: 1px solid #e9ecef;
+            font-size: 11px;
         }
         
         .indexes-title {
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             color: #495057;
         }
         
         .index-item {
             font-family: monospace;
-            font-size: 13px;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             color: #6c757d;
         }
         
@@ -121,6 +167,109 @@
             border-radius: 4px;
             font-weight: 500;
             font-size: 14px;
+            z-index: 100;
+        }
+        
+        /* SVG pour les flèches de relations */
+        .relations-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .relation-line {
+            stroke: #3498db;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+            opacity: 0.7;
+        }
+        
+        .relation-line:hover {
+            stroke: #e74c3c;
+            stroke-width: 3;
+            opacity: 1;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .controls button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 12px;
+        }
+        
+        .controls button:hover {
+            background: #34495e;
+        }
+        
+        .legend {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        
+        .legend-pk {
+            background-color: #f39c12;
+        }
+        
+        .legend-fk {
+            background-color: #3498db;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .database-model {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .database-model {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .database-model {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -128,15 +277,38 @@
     <div class="container">
         <header>
             <h1>Figure 1: Le Schéma FindIn</h1>
-            <p class="schema-description">Modèle de base de données pour la solution FindIn</p>
+            <p class="schema-description">Modèle de base de données pour la solution FindIn - Version Interactive</p>
         </header>
+        
+        <div class="controls">
+            <button id="toggle-relations">Afficher/Masquer les relations</button>
+            <button id="reset-view">Réinitialiser la vue</button>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-pk"></div>
+                <span>Clé primaire</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-fk"></div>
+                <span>Clé étrangère</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Relation</span>
+            </div>
+        </div>
         
         <div class="database-model">
             <!-- Table UTILISATEUR -->
-            <div class="table-container">
-                <div class="table-header">UTILISATEUR</div>
+            <div class="table-container" id="table-utilisateur" data-table="UTILISATEUR">
+                <div class="table-header">
+                    <span>UTILISATEUR</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_utilisateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -158,27 +330,11 @@
                     </div>
                     <div class="field">
                         <span class="field-name">role</span>
-                        <span class="field-type">ENUM('admin','manager','employe')</span>
+                        <span class="field-type">ENUM</span>
                     </div>
-                    <div class="field">
-                        <span class="field-name">date_inscription</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_entreprise</span>
                         <span class="field-type">INT(11)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">statut</span>
-                        <span class="field-type">ENUM('actif','inactif','suspendu')</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">poste</span>
-                        <span class="field-type">VARCHAR(150)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_embauche</span>
-                        <span class="field-type">DATE</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -190,10 +346,13 @@
             </div>
             
             <!-- Table ENTREPRISE -->
-            <div class="table-container">
-                <div class="table-header">ENTREPRISE</div>
+            <div class="table-container" id="table-entreprise" data-table="ENTREPRISE">
+                <div class="table-header">
+                    <span>ENTREPRISE</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_entreprise</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -209,14 +368,6 @@
                         <span class="field-name">nombre_employes</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
-                        <span class="field-name">description</span>
-                        <span class="field-type">TEXT</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_inscription</span>
-                        <span class="field-type">DATE</span>
-                    </div>
                 </div>
                 <div class="indexes-section">
                     <div class="indexes-title">Indexes</div>
@@ -226,10 +377,13 @@
             </div>
             
             <!-- Table COMPETENCE -->
-            <div class="table-container">
-                <div class="table-header">COMPETENCE</div>
+            <div class="table-container" id="table-competence" data-table="COMPETENCE">
+                <div class="table-header">
+                    <span>COMPETENCE</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_competence</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -237,17 +391,9 @@
                         <span class="field-name">nom_competence</span>
                         <span class="field-type">VARCHAR(150)</span>
                     </div>
-                    <div class="field">
-                        <span class="field-name">description</span>
-                        <span class="field-type">TEXT</span>
-                    </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_categorie</span>
                         <span class="field-type">INT(11)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_creation</span>
-                        <span class="field-type">DATE</span>
                     </div>
                     <div class="field">
                         <span class="field-name">est_validee</span>
@@ -263,10 +409,13 @@
             </div>
             
             <!-- Table CATEGORIE_COMPETENCE -->
-            <div class="table-container">
-                <div class="table-header">CATEGORIE_COMPETENCE</div>
+            <div class="table-container" id="table-categorie" data-table="CATEGORIE_COMPETENCE">
+                <div class="table-header">
+                    <span>CATEGORIE_COMPETENCE</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_categorie</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -275,16 +424,8 @@
                         <span class="field-type">VARCHAR(100)</span>
                     </div>
                     <div class="field">
-                        <span class="field-name">description</span>
-                        <span class="field-type">TEXT</span>
-                    </div>
-                    <div class="field">
                         <span class="field-name">couleur</span>
                         <span class="field-type">VARCHAR(7)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">icone</span>
-                        <span class="field-type">VARCHAR(50)</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -295,32 +436,27 @@
             </div>
             
             <!-- Table COMPETENCE_UTILISATEUR -->
-            <div class="table-container">
-                <div class="table-header">COMPETENCE_UTILISATEUR</div>
+            <div class="table-container" id="table-competence-utilisateur" data-table="COMPETENCE_UTILISATEUR">
+                <div class="table-header">
+                    <span>COMPETENCE_UTILISATEUR</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_comp_user</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_utilisateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_competence</span>
                         <span class="field-type">INT(11)</span>
                     </div>
                     <div class="field">
                         <span class="field-name">niveau_maitrise</span>
                         <span class="field-type">INT(11)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_acquisition</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">source</span>
-                        <span class="field-type">ENUM('cv','formation','validation','auto')</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -332,10 +468,13 @@
             </div>
             
             <!-- Table PROJET -->
-            <div class="table-container">
-                <div class="table-header">PROJET</div>
+            <div class="table-container" id="table-projet" data-table="PROJET">
+                <div class="table-header">
+                    <span>PROJET</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_projet</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -343,27 +482,11 @@
                         <span class="field-name">nom_projet</span>
                         <span class="field-type">VARCHAR(200)</span>
                     </div>
-                    <div class="field">
-                        <span class="field-name">description</span>
-                        <span class="field-type">TEXT</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_debut</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_fin</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">statut</span>
-                        <span class="field-type">ENUM('en_cours','termine','annule')</span>
-                    </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_entreprise</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_responsable</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -377,32 +500,27 @@
             </div>
             
             <!-- Table PROJET_MEMBRE -->
-            <div class="table-container">
-                <div class="table-header">PROJET_MEMBRE</div>
+            <div class="table-container" id="table-projet-membre" data-table="PROJET_MEMBRE">
+                <div class="table-header">
+                    <span>PROJET_MEMBRE</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_projet_membre</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_projet</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_utilisateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
                     <div class="field">
                         <span class="field-name">role_projet</span>
                         <span class="field-type">VARCHAR(100)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_integration</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_sortie</span>
-                        <span class="field-type">DATE</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -414,28 +532,27 @@
             </div>
             
             <!-- Table COMPETENCE_PROJET -->
-            <div class="table-container">
-                <div class="table-header">COMPETENCE_PROJET</div>
+            <div class="table-container" id="table-competence-projet" data-table="COMPETENCE_PROJET">
+                <div class="table-header">
+                    <span>COMPETENCE_PROJET</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_comp_projet</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_projet</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_competence</span>
                         <span class="field-type">INT(11)</span>
                     </div>
                     <div class="field">
                         <span class="field-name">niveau_requis</span>
                         <span class="field-type">INT(11)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">priorite</span>
-                        <span class="field-type">ENUM('elevee','moyenne','faible')</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -447,28 +564,27 @@
             </div>
             
             <!-- Table BILAN_COMPETENCES -->
-            <div class="table-container">
-                <div class="table-header">BILAN_COMPETENCES</div>
+            <div class="table-container" id="table-bilan" data-table="BILAN_COMPETENCES">
+                <div class="table-header">
+                    <span>BILAN_COMPETENCES</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_bilan</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_utilisateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_evaluateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
                     <div class="field">
                         <span class="field-name">date_bilan</span>
                         <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">type_bilan</span>
-                        <span class="field-type">ENUM('annuel','semestriel','ad_hoc')</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -480,10 +596,13 @@
             </div>
             
             <!-- Table FORMATION -->
-            <div class="table-container">
-                <div class="table-header">FORMATION</div>
+            <div class="table-container" id="table-formation" data-table="FORMATION">
+                <div class="table-header">
+                    <span>FORMATION</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_formation</span>
                         <span class="field-type">INT(11)</span>
                     </div>
@@ -491,25 +610,13 @@
                         <span class="field-name">nom_formation</span>
                         <span class="field-type">VARCHAR(200)</span>
                     </div>
-                    <div class="field">
-                        <span class="field-name">description</span>
-                        <span class="field-type">TEXT</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_debut</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_fin</span>
-                        <span class="field-type">DATE</span>
-                    </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_utilisateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
                     <div class="field">
                         <span class="field-name">statut</span>
-                        <span class="field-type">ENUM('en_cours','terminee','abandonnee')</span>
+                        <span class="field-type">ENUM</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -520,32 +627,27 @@
             </div>
             
             <!-- Table VALIDATION -->
-            <div class="table-container">
-                <div class="table-header">VALIDATION</div>
+            <div class="table-container" id="table-validation" data-table="VALIDATION">
+                <div class="table-header">
+                    <span>VALIDATION</span>
+                    <button class="toggle-btn">−</button>
+                </div>
                 <div class="fields">
-                    <div class="field">
+                    <div class="field pk">
                         <span class="field-name">id_validation</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_utilisateur</span>
                         <span class="field-type">INT(11)</span>
                     </div>
-                    <div class="field">
-                        <span class="field-name">id_evaluateur</span>
-                        <span class="field-type">INT(11)</span>
-                    </div>
-                    <div class="field">
+                    <div class="field fk">
                         <span class="field-name">id_competence</span>
                         <span class="field-type">INT(11)</span>
                     </div>
                     <div class="field">
                         <span class="field-name">note</span>
                         <span class="field-type">INT(11)</span>
-                    </div>
-                    <div class="field">
-                        <span class="field-name">date_validation</span>
-                        <span class="field-type">DATE</span>
                     </div>
                 </div>
                 <div class="indexes-section">
@@ -557,7 +659,138 @@
             </div>
         </div>
         
+        <!-- SVG pour les relations -->
+        <svg class="relations-container" id="relations-svg">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                    refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#3498db"/>
+                </marker>
+            </defs>
+        </svg>
+        
         <div class="mysql-badge">MySQL</div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion du toggle des tables
+            const toggleButtons = document.querySelectorAll('.toggle-btn');
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const fields = this.closest('.table-container').querySelector('.fields');
+                    if (fields.style.display === 'none') {
+                        fields.style.display = 'block';
+                        this.textContent = '−';
+                    } else {
+                        fields.style.display = 'none';
+                        this.textContent = '+';
+                    }
+                });
+            });
+            
+            // Gestion des contrôles
+            const toggleRelationsBtn = document.getElementById('toggle-relations');
+            const resetViewBtn = document.getElementById('reset-view');
+            const relationsSvg = document.getElementById('relations-svg');
+            
+            let relationsVisible = true;
+            
+            toggleRelationsBtn.addEventListener('click', function() {
+                relationsVisible = !relationsVisible;
+                relationsSvg.style.display = relationsVisible ? 'block' : 'none';
+            });
+            
+            resetViewBtn.addEventListener('click', function() {
+                // Réinitialiser l'affichage des tables
+                document.querySelectorAll('.fields').forEach(fields => {
+                    fields.style.display = 'block';
+                });
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    btn.textContent = '−';
+                });
+                
+                // Réafficher les relations
+                relationsVisible = true;
+                relationsSvg.style.display = 'block';
+            });
+            
+            // Dessiner les relations entre les tables
+            function drawRelations() {
+                // Vider le SVG
+                while (relationsSvg.firstChild && relationsSvg.firstChild.tagName !== 'defs') {
+                    relationsSvg.removeChild(relationsSvg.firstChild);
+                }
+                
+                // Définir les relations
+                const relations = [
+                    // UTILISATEUR -> ENTREPRISE
+                    { from: 'table-utilisateur', to: 'table-entreprise', fromField: 'id_entreprise', toField: 'id_entreprise' },
+                    // COMPETENCE -> CATEGORIE_COMPETENCE
+                    { from: 'table-competence', to: 'table-categorie', fromField: 'id_categorie', toField: 'id_categorie' },
+                    // COMPETENCE_UTILISATEUR -> UTILISATEUR
+                    { from: 'table-competence-utilisateur', to: 'table-utilisateur', fromField: 'id_utilisateur', toField: 'id_utilisateur' },
+                    // COMPETENCE_UTILISATEUR -> COMPETENCE
+                    { from: 'table-competence-utilisateur', to: 'table-competence', fromField: 'id_competence', toField: 'id_competence' },
+                    // PROJET -> ENTREPRISE
+                    { from: 'table-projet', to: 'table-entreprise', fromField: 'id_entreprise', toField: 'id_entreprise' },
+                    // PROJET -> UTILISATEUR (responsable)
+                    { from: 'table-projet', to: 'table-utilisateur', fromField: 'id_responsable', toField: 'id_utilisateur' },
+                    // PROJET_MEMBRE -> PROJET
+                    { from: 'table-projet-membre', to: 'table-projet', fromField: 'id_projet', toField: 'id_projet' },
+                    // PROJET_MEMBRE -> UTILISATEUR
+                    { from: 'table-projet-membre', to: 'table-utilisateur', fromField: 'id_utilisateur', toField: 'id_utilisateur' },
+                    // COMPETENCE_PROJET -> PROJET
+                    { from: 'table-competence-projet', to: 'table-projet', fromField: 'id_projet', toField: 'id_projet' },
+                    // COMPETENCE_PROJET -> COMPETENCE
+                    { from: 'table-competence-projet', to: 'table-competence', fromField: 'id_competence', toField: 'id_competence' },
+                    // BILAN_COMPETENCES -> UTILISATEUR (évalué)
+                    { from: 'table-bilan', to: 'table-utilisateur', fromField: 'id_utilisateur', toField: 'id_utilisateur' },
+                    // BILAN_COMPETENCES -> UTILISATEUR (évaluateur)
+                    { from: 'table-bilan', to: 'table-utilisateur', fromField: 'id_evaluateur', toField: 'id_utilisateur' },
+                    // FORMATION -> UTILISATEUR
+                    { from: 'table-formation', to: 'table-utilisateur', fromField: 'id_utilisateur', toField: 'id_utilisateur' },
+                    // VALIDATION -> UTILISATEUR
+                    { from: 'table-validation', to: 'table-utilisateur', fromField: 'id_utilisateur', toField: 'id_utilisateur' },
+                    // VALIDATION -> COMPETENCE
+                    { from: 'table-validation', to: 'table-competence', fromField: 'id_competence', toField: 'id_competence' }
+                ];
+                
+                // Dessiner chaque relation
+                relations.forEach(relation => {
+                    const fromTable = document.getElementById(relation.from);
+                    const toTable = document.getElementById(relation.to);
+                    
+                    if (fromTable && toTable) {
+                        const fromRect = fromTable.getBoundingClientRect();
+                        const toRect = toTable.getBoundingClientRect();
+                        const containerRect = relationsSvg.getBoundingClientRect();
+                        
+                        // Calculer les positions relatives
+                        const fromX = fromRect.left + fromRect.width - containerRect.left;
+                        const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
+                        const toX = toRect.left - containerRect.left;
+                        const toY = toRect.top + toRect.height / 2 - containerRect.top;
+                        
+                        // Créer la ligne
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', fromX);
+                        line.setAttribute('y1', fromY);
+                        line.setAttribute('x2', toX);
+                        line.setAttribute('y2', toY);
+                        line.setAttribute('class', 'relation-line');
+                        
+                        relationsSvg.appendChild(line);
+                    }
+                });
+            }
+            
+            // Redessiner les relations lors du redimensionnement
+            window.addEventListener('resize', drawRelations);
+            
+            // Dessiner les relations initiales
+            drawRelations();
+        });
+    </script>
 </body>
 </html>
