@@ -1,1 +1,382 @@
-
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modèle de Base de Données G2D </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #1a1a1a;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .table-container {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .table-header::before {
+            content: "▸";
+            margin-right: 10px;
+            color: #6c757d;
+        }
+        
+        .fields {
+            padding: 0;
+        }
+        
+        .field {
+            display: flex;
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .field:last-child {
+            border-bottom: none;
+        }
+        
+        .field-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .field-type {
+            color: #6c757d;
+            font-family: monospace;
+        }
+        
+        .checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Modèle de la base de données</h1>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub users</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">name</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">lastname</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">password</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">email</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">phone</span>
+                    <span class="field-type">: varchar(20)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">birth_date</span>
+                    <span class="field-type">: date</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">is_admin</span>
+                    <span class="field-type">: tinyint(1)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">is_banned</span>
+                    <span class="field-type">: tinyint(1)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub products users</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id_user</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id_product</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">date</span>
+                    <span class="field-type">: datetime</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">is_gestionnaire</span>
+                    <span class="field-type">: tinyint(1)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub metrics</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id_product</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">date</span>
+                    <span class="field-type">: datetime</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">data</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id_type</span>
+                    <span class="field-type">: int</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub notifications users</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id_user</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id_notification</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">read</span>
+                    <span class="field-type">: tinyint(1)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub products</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">product_name</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">room_name</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">house_name</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">product_code</span>
+                    <span class="field-type">: varchar(16)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">user_code</span>
+                    <span class="field-type">: varchar(16)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">expiration_date</span>
+                    <span class="field-type">: date</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">db_max</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">temp_max</span>
+                    <span class="field-type">: int</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub type</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">type_name</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub translations</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">key</span>
+                    <span class="field-type">: varchar(64)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">lang</span>
+                    <span class="field-type">: varchar(2)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">value</span>
+                    <span class="field-type">: text</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub fee</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">diguestion</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">lang</span>
+                    <span class="field-type">: varchar(2)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">question</span>
+                    <span class="field-type">: text</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">reponse</span>
+                    <span class="field-type">: text</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">saïeHub notifications</div>
+            <div class="fields">
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">id</span>
+                    <span class="field-type">: int</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">title</span>
+                    <span class="field-type">: varchar(255)</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">content</span>
+                    <span class="field-type">: text</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">date</span>
+                    <span class="field-type">: datetime</span>
+                </div>
+                <div class="field">
+                    <input type="checkbox" class="checkbox">
+                    <span class="field-name">importance</span>
+                    <span class="field-type">: int</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
