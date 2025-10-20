@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Présentation FindIn - Premier Rendez-vous Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: hidden;
+        }
+        
+        .ppt-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .slides-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            padding: 60px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .slide.active {
+            display: flex;
+            transform: translateX(0);
+        }
+        
+        .slide.next {
+            transform: translateX(100%);
+        }
+        
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+        
+        .slide-header {
+            margin-bottom: 40px;
+        }
+        
+        .slide-title {
+            font-size: 3.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        
+        .slide-subtitle {
+            font-size: 1.8em;
+            color: #7f8c8d;
+            font-weight: 300;
+        }
+        
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 5px solid #3498db;
+            text-align: left;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .feature-card p {
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3em;
+            font-weight: 700;
+            color: #3498db;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #3498db;
+        }
+        
+        .timeline-item {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .team-member {
+            text-align: center;
+        }
+        
+        .member-avatar {
+            width: 120px;
+            height: 120px;
+            background: #3498db;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+        
+        .control-btn {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .control-btn:hover {
+            background: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+        
+        .logo {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            z-index: 1000;
+        }
+        
+        .highlight {
+            color: #3498db;
+        }
+        
+        .bullet-points {
+            text-align: left;
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        
+        .bullet-points li {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+        
+        .demo-box {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 2px dashed #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="ppt-container">
+        <div class="logo">Find<span class="highlight">In</span></div>
+        <div class="slide-counter">1/12</div>
+        
+        <div class="slides-container">
+            <!-- Slide 1: Titre -->
+            <div class="slide active" id="slide1">
+                <div class="slide-header">
+                    <h1 class="slide-title">Find<span class="highlight">In</span></h1>
+                    <p class="slide-subtitle">Solution innovante de gestion des compétences et des talents</p>
+                </div>
+                <div class="slide-content">
+                    <div class="demo-box">
+                        <h3>Premier rendez-vous client</h3>
+                        <p>Présentation de notre vision et valeur ajoutée</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 2: Problématique -->
+            <div class="slide" id="slide2">
+                <div class="slide-header">
+                    <h2 class="slide-title">La problématique actuelle</h2>
+                    <p class="slide-subtitle">Les défis de la gestion des compétences en entreprise</p>
+                </div>
+                <div class="slide-content">
+                    <div class="content-grid">
+                        <div class="feature-card">
+                            <h3>📊 Visibilité limitée</h3>
+                            <p>Impossible d'avoir une vision claire et actualisée des compétences disponibles dans l'entreprise</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>⏱️ Processus manuels</h3>
+                            <p>Évaluations papier, tableaux Excel, processus longs et sujets aux erreurs</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🔍 Difficultés de matching</h3>
+                            <p>Problèmes pour identifier les bonnes compétences au bon moment sur les projets</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📈 Développement inégal</h3>
+                            <p>Absence de suivi structuré du développement des compétences des collaborateurs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 3: Notre solution -->
+            <div class="slide" id="slide3">
+                <div class="slide-header">
+                    <h2 class="slide-title">Notre solution</h2>
+                    <p class="slide-subtitle">FindIn révolutionne la gestion des talents</p>
+                </div>
+                <div class="slide-content">
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Digital</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">24/7</span>
+                            <span class="stat-label">Accessible</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">360°</span>
+                            <span class="stat-label">Vision</span>
+                        </div>
+                    </div>
+                    <div class="bullet-points">
+                        <ul>
+                            <li>✅ Plateforme centralisée de gestion des compétences</li>
+                            <li>✅ Cartographie dynamique des talents</li>
+                            <li>✅ Matching intelligent projets-compétences</li>
+                            <li>✅ Suivi continu du développement</li>
+                            <li>✅ Analytics prédictifs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 4: Fonctionnalités principales -->
+            <div class="slide" id="slide4">
+                <div class="slide-header">
+                    <h2 class="slide-title">Fonctionnalités clés</h2>
+                    <p class="slide-subtitle">Une plateforme complète et intuitive</p>
+                </div>
+                <div class="slide-content">
+                    <div class="content-grid">
+                        <div class="feature-card">
+                            <h3>🎯 Profils compétences</h3>
+                            <p>Cartographie détaillée des compétences de chaque collaborateur avec niveaux de maîtrise</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📋 Gestion des projets</h3>
+                            <p>Définition des compétences requises et matching automatique avec les profils disponibles</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📊 Bilans personnalisés</h3>
+                            <p>Évaluations régulières et plans de développement individualisés</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📈 Analytics avancés</h3>
+                            <p>Tableaux de bord et rapports pour une prise de décision éclairée</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 5: Architecture technique -->
+            <div class="slide" id="slide5">
+                <div class="slide-header">
+                    <h2 class="slide-title">Architecture technique</h2>
+                    <p class="slide-subtitle">Une solution robuste et évolutive</p>
+                </div>
+                <div class="slide-content">
+                    <div class="demo-box">
+                        <h3>🛠️ Stack technologique</h3>
+                        <div class="content-grid" style="margin-top: 20px;">
+                            <div class="feature-card">
+                                <h3>Frontend</h3>
+                                <p>React.js - Interface moderne et réactive</p>
+                            </div>
+                            <div class="feature-card">
+                                <h3>Backend</h3>
+                                <p>Node.js - API REST performante</p>
+                            </div>
+                            <div class="feature-card">
+                                <h3>Base de données</h3>
+                                <p>MySQL - Structure relationnelle optimisée</p>
+                            </div>
+                            <div class="feature-card">
+                                <h3>Hébergement</h3>
+                                <p>Cloud sécurisé avec haute disponibilité</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 6: Avantages clients -->
+            <div class="slide" id="slide6">
+                <div class="slide-header">
+                    <h2 class="slide-title">Avantages clients</h2>
+                    <p class="slide-subtitle">Ce que FindIn vous apporte</p>
+                </div>
+                <div class="slide-content">
+                    <div class="content-grid">
+                        <div class="feature-card">
+                            <h3>💰 ROI mesurable</h3>
+                            <p>Jusqu'à 40% de réduction des coûts de recrutement externe</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🚀 Productivité +35%</h3>
+                            <p>Optimisation de l'affectation des ressources sur les projets</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📊 Prise de décision</h3>
+                            <p>Données en temps réel pour des décisions stratégiques éclairées</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>💼 Rétention talents</h3>
+                            <p>+25% de rétention grâce au développement personnalisé</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 7: Cas d'usage -->
+            <div class="slide" id="slide7">
+                <div class="slide-header">
+                    <h2 class="slide-title">Cas d'usage</h2>
+                    <p class="slide-subtitle">Scénarios concrets d'utilisation</p>
+                </div>
+                <div class="slide-content">
+                    <div class="content-grid">
+                        <div class="feature-card">
+                            <h3>🎯 Lancement de projet</h3>
+                            <p>Identifier rapidement les collaborateurs avec les compétences requises pour un nouveau projet stratégique</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📈 Planification formation</h3>
+                            <p>Détecter les gaps de compétences et planifier les formations adaptées</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🔄 Mobilité interne</h3>
+                            <p>Faciliter les reconversions et évolutions professionnelles internes</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📋 Due diligence</h3>
+                            <p>Audit complet des compétences lors de fusions-acquisitions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 8: Roadmap -->
+            <div class="slide" id="slide8">
+                <div class="slide-header">
+                    <h2 class="slide-title">Feuille de route</h2>
+                    <p class="slide-subtitle">Notre vision à court et moyen terme</p>
+                </div>
+                <div class="slide-content">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3>Phase 1</h3>
+                            <p>MVP - Gestion basique des compétences</p>
+                            <p><strong>Q1 2024</strong></p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3>Phase 2</h3>
+                            <p>Analytics et rapports avancés</p>
+                            <p><strong>Q2 2024</strong></p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3>Phase 3</h3>
+                            <p>IA et recommandations intelligentes</p>
+                            <p><strong>Q4 2024</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 9: Équipe -->
+            <div class="slide" id="slide9">
+                <div class="slide-header">
+                    <h2 class="slide-title">Notre équipe</h2>
+                    <p class="slide-subtitle">L'expertise au service de votre succès</p>
+                </div>
+                <div class="slide-content">
+                    <div class="team-grid">
+                        <div class="team-member">
+                            <div class="member-avatar">JD</div>
+                            <h3>Jean Dupont</h3>
+                            <p>CEO & Fondateur</p>
+                            <p>15 ans RH Tech</p>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-avatar">MM</div>
+                            <h3>Marie Martin</h3>
+                            <p>CTO</p>
+                            <p>Expertise Cloud & Data</p>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-avatar">PL</div>
+                            <h3>Pierre Lambert</h3>
+                            <p>Head of Product</p>
+                            <p>Spécialiste UX/UI</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 10: Modèle économique -->
+            <div class="slide" id="slide10">
+                <div class="slide-header">
+                    <h2 class="slide-title">Modèle économique</h2>
+                    <p class="slide-subtitle">Des tarifs adaptés à votre structure</p>
+                </div>
+                <div class="slide-content">
+                    <div class="content-grid">
+                        <div class="feature-card">
+                            <h3>🚀 Start-up</h3>
+                            <p><strong>29€/utilisateur/mois</strong></p>
+                            <p>Jusqu'à 50 collaborateurs</p>
+                            <p>Support prioritaire</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🏢 Enterprise</h3>
+                            <p><strong>49€/utilisateur/mois</strong></p>
+                            <p>+50 collaborateurs</p>
+                            <p>Fonctionnalités avancées</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🌐 Custom</h3>
+                            <p><strong>Devis personnalisé</strong></p>
+                            <p>Solutions sur mesure</p>
+                            <p>Intégrations spécifiques</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 11: Prochaines étapes -->
+            <div class="slide" id="slide11">
+                <div class="slide-header">
+                    <h2 class="slide-title">Prochaines étapes</h2>
+                    <p class="slide-subtitle">Concrétisons notre partenariat</p>
+                </div>
+                <div class="slide-content">
+                    <div class="bullet-points">
+                        <ul>
+                            <li>📅 <strong>Atelier découverte</strong> - Session de 2h pour analyser vos besoins spécifiques</li>
+                            <li>🎯 <strong>Proof of Concept</strong> - Mise en place d'un environnement de test gratuit</li>
+                            <li>🤝 <strong>Proposition commerciale</strong> - Offre adaptée à vos objectifs et contraintes</li>
+                            <li>🚀 <strong>Déploiement</strong> - Accompagnement personnalisé pour une adoption réussie</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 12: Merci -->
+            <div class="slide" id="slide12">
+                <div class="slide-header">
+                    <h1 class="slide-title">Merci</h1>
+                    <p class="slide-subtitle">Restons en contact</p>
+                </div>
+                <div class="slide-content">
+                    <div class="demo-box">
+                        <h3>📧 contact@findin.com</h3>
+                        <h3>🌐 www.findin.com</h3>
+                        <h3>📱 +33 1 23 45 67 89</h3>
+                        <p style="margin-top: 20px; color: #7f8c8d;">Prêts à transformer votre gestion des talents ?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" id="prev-btn">← Précédent</button>
+            <button class="control-btn" id="next-btn">Suivant →</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.querySelector('.slide-counter');
+            let currentSlide = 0;
+            
+            function updateSlide() {
+                slides.forEach((slide, index) => {
+                    slide.classList.remove('active', 'prev', 'next');
+                    if (index === currentSlide) {
+                        slide.classList.add('active');
+                    } else if (index < currentSlide) {
+                        slide.classList.add('prev');
+                    } else {
+                        slide.classList.add('next');
+                    }
+                });
+                
+                slideCounter.textContent = `${currentSlide + 1}/${slides.length}`;
+            }
+            
+            function nextSlide() {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    updateSlide();
+                }
+            }
+            
+            function prevSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateSlide();
+                }
+            }
+            
+            // Navigation boutons
+            nextBtn.addEventListener('click', nextSlide);
+            prevBtn.addEventListener('click', prevSlide);
+            
+            // Navigation clavier
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight') {
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                }
+            });
+            
+            // Navigation swipe (mobile)
+            let startX = 0;
+            document.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                const endX = e.changedTouches[0].clientX;
+                const diffX = startX - endX;
+                
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        nextSlide();
+                    } else {
+                        prevSlide();
+                    }
+                }
+            });
+            
+            // Initialisation
+            updateSlide();
+        });
+    </script>
+</body>
+</html>
