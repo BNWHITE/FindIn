@@ -1,1 +1,1465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramme de Gantt - FindIn G2D</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
 
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71, #3498db);
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn.all {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .filter-btn.phase1 { background: #e8f4fd; color: #2980b9; border: 1px solid #3498db; }
+        .filter-btn.phase2 { background: #e8f8f5; color: #27ae60; border: 1px solid #2ecc71; }
+        .filter-btn.phase3 { background: #fef9e7; color: #f39c12; border: 1px solid #f1c40f; }
+        .filter-btn.phase4 { background: #fbeeee; color: #c0392b; border: 1px solid #e74c3c; }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .filter-btn.active {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: scale(1.05);
+        }
+
+        .export-btn {
+            margin-left: auto;
+            padding: 10px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-btn:hover {
+            background: #219955;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .gantt-wrapper {
+            padding: 25px;
+            overflow-x: auto;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 1200px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            padding: 14px 10px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-right: 1px solid #2c3e50;
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .task-row.phase-header td {
+            background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 16px 10px;
+        }
+
+        .task-id {
+            font-weight: bold;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
+
+        .task-name {
+            font-weight: 500;
+        }
+
+        .task-owner {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 22px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 11px;
+            transition: width 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .progress-0 { background: #e74c3c; width: 0%; }
+        .progress-10 { background: #e67e22; width: 10%; }
+        .progress-20 { background: #f39c12; width: 20%; }
+        .progress-30 { background: #f1c40f; width: 30%; }
+        .progress-40 { background: #3498db; width: 40%; }
+        .progress-50 { background: #3498db; width: 50%; }
+        .progress-60 { background: #2ecc71; width: 60%; }
+        .progress-70 { background: #27ae60; width: 70%; }
+        .progress-80 { background: #27ae60; width: 80%; }
+        .progress-90 { background: #27ae60; width: 90%; }
+        .progress-100 { background: #27ae60; width: 100%; }
+
+        .date {
+            color: #666;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .duration {
+            text-align: center;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .milestone {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+        }
+
+        .milestone .task-name::before {
+            content: "🎯 ";
+        }
+
+        .search-box {
+            padding: 10px 15px;
+            border: 2px solid #3498db;
+            border-radius: 6px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 250px;
+            transition: all 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .gantt-wrapper {
+                padding: 15px;
+            }
+            
+            .export-btn {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Diagramme de Gantt - FindIn</h1>
+            <p>Projet APP Informatique | Groupe G2D | Année 2025-2026</p>
+        </div>
+
+        <div class="controls">
+            <button class="filter-btn all active" onclick="filterPhase('all')">Toutes les phases</button>
+            <button class="filter-btn phase1" onclick="filterPhase('phase1')">Phase 1-2</button>
+            <button class="filter-btn phase2" onclick="filterPhase('phase2')">Phase 3-4</button>
+            <button class="filter-btn phase3" onclick="filterPhase('phase3')">Phase 5-7</button>
+            <button class="filter-btn phase4" onclick="filterPhase('phase4')">Phase 8-10</button>
+            
+            <input type="text" id="searchInput" class="search-box" placeholder="Rechercher une tâche...">
+            
+            <button class="export-btn" onclick="exportToExcel()">
+                📥 Exporter vers Excel
+            </button>
+        </div>
+
+        <div class="gantt-wrapper">
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>Non commencé (0%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f39c12;"></div>
+                    <span>En cours (10-30%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3498db;"></div>
+                    <span>Progression (40-50%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2ecc71;"></div>
+                    <span>Avancé (60-70%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #27ae60;"></div>
+                    <span>Bien avancé (80-100%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff3cd; border: 1px solid #f39c12;"></div>
+                    <span>Jalon important</span>
+                </div>
+            </div>
+
+            <table id="ganttTable">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ID Tâche</th>
+                        <th style="width: 300px;">Description</th>
+                        <th style="width: 120px;">Responsable</th>
+                        <th style="width: 100px;">Début</th>
+                        <th style="width: 100px;">Fin</th>
+                        <th style="width: 60px;">Durée</th>
+                        <th style="width: 200px;">Progression</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- PHASE 1: MISE EN ROUTE -->
+                    <tr class="task-row phase-header" data-phase="phase1">
+                        <td colspan="7">PHASE 1 : MISE EN ROUTE DU PROJET (Semaine 1-2)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">1.1</td>
+                        <td class="task-name">Présentation de l'APP</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">13/10</td>
+                        <td class="date">13/10</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">1.2</td>
+                        <td class="task-name">Cours de restructuration IHM/UML</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">13/10</td>
+                        <td class="date">13/10</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">1.3</td>
+                        <td class="task-name">Choix du sujet FindIn & logo</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">14/10</td>
+                        <td class="date">14/10</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">1.4</td>
+                        <td class="task-name">Rédaction charte équipe</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">14/10</td>
+                        <td class="date">14/10</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">1.5</td>
+                        <td class="task-name">Mise en place Gantt initial</td>
+                        <td class="task-owner">Chef projet</td>
+                        <td class="date">15/10</td>
+                        <td class="date">16/10</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">1.6</td>
+                        <td class="task-name">Mise en place tableau de bord (Trello/Notion)</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">16/10</td>
+                        <td class="date">17/10</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 2: SPÉCIFICATION -->
+                    <tr class="task-row phase-header" data-phase="phase1">
+                        <td colspan="7">PHASE 2 : SPÉCIFICATION (Semaine 2-3)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">2.1</td>
+                        <td class="task-name">Analyse des besoins fonctionnels</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">17/10</td>
+                        <td class="date">20/10</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">2.2</td>
+                        <td class="task-name">Diagrammes UML (Use Cases)</td>
+                        <td class="task-owner">Binôme 1</td>
+                        <td class="date">17/10</td>
+                        <td class="date">21/10</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">2.3</td>
+                        <td class="task-name">Maquettes Figma (wireframes)</td>
+                        <td class="task-owner">Binôme 2</td>
+                        <td class="date">17/10</td>
+                        <td class="date">23/10</td>
+                        <td class="duration">7j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">2.4</td>
+                        <td class="task-name">Définition profils utilisateurs</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">20/10</td>
+                        <td class="date">21/10</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">2.5</td>
+                        <td class="task-name">Rédaction document spécifications</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">22/10</td>
+                        <td class="date">24/10</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase1">
+                        <td class="task-id">2.6</td>
+                        <td class="task-name">RDV CLIENT #1 - Validation spécifications</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">24/10</td>
+                        <td class="date">24/10</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase1">
+                        <td class="task-id">2.7</td>
+                        <td class="task-name">Ajustements post-client</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">25/10</td>
+                        <td class="date">27/10</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 3: CONCEPTION -->
+                    <tr class="task-row phase-header" data-phase="phase2">
+                        <td colspan="7">PHASE 3 : CONCEPTION (Semaine 3-4)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.1</td>
+                        <td class="task-name">Cours tuteur BDD/EA</td>
+                        <td class="task-owner">Tuteur</td>
+                        <td class="date">03/11</td>
+                        <td class="date">03/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.2</td>
+                        <td class="task-name">Conception modèle E/A</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">04/11</td>
+                        <td class="date">07/11</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-90">90%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.3</td>
+                        <td class="task-name">Cours tuteur Mapping</td>
+                        <td class="task-owner">Tuteur</td>
+                        <td class="date">06/11</td>
+                        <td class="date">06/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.4</td>
+                        <td class="task-name">Modèle relationnel (schéma logique)</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">07/11</td>
+                        <td class="date">09/11</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-80">85%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.5</td>
+                        <td class="task-name">Exercices BDD</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">05/11</td>
+                        <td class="date">08/11</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-80">80%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase2">
+                        <td class="task-id">3.6</td>
+                        <td class="task-name">Validation BDD avec tuteur</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">10/11</td>
+                        <td class="date">10/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.7</td>
+                        <td class="task-name">Création BDD sur PhpMyAdmin</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">10/11</td>
+                        <td class="date">12/11</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-70">75%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">3.8</td>
+                        <td class="task-name">Schéma de navigation détaillé</td>
+                        <td class="task-owner">Designer</td>
+                        <td class="date">08/11</td>
+                        <td class="date">10/11</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-70">70%</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 4: FORMATION -->
+                    <tr class="task-row phase-header" data-phase="phase2">
+                        <td colspan="7">PHASE 4 : FORMATION & SETUP TECHNIQUE (Semaine 4-6)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">4.1</td>
+                        <td class="task-name">Auto-formation HTML/CSS</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">10/11</td>
+                        <td class="date">17/11</td>
+                        <td class="duration">8j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-80">80%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">4.2</td>
+                        <td class="task-name">Cours tuteur HTML/CSS</td>
+                        <td class="task-owner">Tuteur</td>
+                        <td class="date">10/11</td>
+                        <td class="date">10/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">4.3</td>
+                        <td class="task-name">Ateliers HTML/CSS</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">11/11</td>
+                        <td class="date">14/11</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-70">75%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase2">
+                        <td class="task-id">4.4</td>
+                        <td class="task-name">Présentation élèves CSS (1)</td>
+                        <td class="task-owner">Binôme 1</td>
+                        <td class="date">17/11</td>
+                        <td class="date">17/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-70">70%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">4.5</td>
+                        <td class="task-name">Création espace Git/GitHub</td>
+                        <td class="task-owner">Tech Lead</td>
+                        <td class="date">17/11</td>
+                        <td class="date">18/11</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-90">90%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase2">
+                        <td class="task-id">4.6</td>
+                        <td class="task-name">Exercices SQL</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">11/11</td>
+                        <td class="date">17/11</td>
+                        <td class="duration">7j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-70">70%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase2">
+                        <td class="task-id">4.7</td>
+                        <td class="task-name">Évaluation BDD</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">17/11</td>
+                        <td class="date">17/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 5: PAGES STATIQUES -->
+                    <tr class="task-row phase-header" data-phase="phase3">
+                        <td colspan="7">PHASE 5 : DÉVELOPPEMENT - PAGES STATIQUES (Semaine 6-7)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.1</td>
+                        <td class="task-name">Page d'accueil (statique)</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">18/11</td>
+                        <td class="date">22/11</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-60">65%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.2</td>
+                        <td class="task-name">Page inscription/connexion (statique)</td>
+                        <td class="task-owner">Dev 2</td>
+                        <td class="date">18/11</td>
+                        <td class="date">22/11</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-60">60%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.3</td>
+                        <td class="task-name">Page profil utilisateur (statique)</td>
+                        <td class="task-owner">Dev 3</td>
+                        <td class="date">18/11</td>
+                        <td class="date">22/11</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-60">60%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.4</td>
+                        <td class="task-name">Page recherche compétences (statique)</td>
+                        <td class="task-owner">Dev 4</td>
+                        <td class="date">18/11</td>
+                        <td class="date">22/11</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-50">55%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.5</td>
+                        <td class="task-name">Page FAQ (statique)</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">23/11</td>
+                        <td class="date">24/11</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-50">50%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.6</td>
+                        <td class="task-name">Cours tuteur JavaScript</td>
+                        <td class="task-owner">Tuteur</td>
+                        <td class="date">17/11</td>
+                        <td class="date">17/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-100">100%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">5.7</td>
+                        <td class="task-name">Ateliers JavaScript</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">18/11</td>
+                        <td class="date">23/11</td>
+                        <td class="duration">6j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-40">45%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase3">
+                        <td class="task-id">5.8</td>
+                        <td class="task-name">Présentation élèves CSS (2)</td>
+                        <td class="task-owner">Binôme 2</td>
+                        <td class="date">17/11</td>
+                        <td class="date">17/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 6: DYNAMISATION -->
+                    <tr class="task-row phase-header" data-phase="phase3">
+                        <td colspan="7">PHASE 6 : DÉVELOPPEMENT - DYNAMISATION (Semaine 7-8)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.1</td>
+                        <td class="task-name">Cours tuteur PHP</td>
+                        <td class="task-owner">Tuteur</td>
+                        <td class="date">24/11</td>
+                        <td class="date">24/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.2</td>
+                        <td class="task-name">Ateliers PHP</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">25/11</td>
+                        <td class="date">29/11</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-40">40%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.3</td>
+                        <td class="task-name">Cours tuteur MVC</td>
+                        <td class="task-owner">Tuteur</td>
+                        <td class="date">24/11</td>
+                        <td class="date">24/11</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.4</td>
+                        <td class="task-name">Mise en place architecture MVC</td>
+                        <td class="task-owner">Tech Lead</td>
+                        <td class="date">25/11</td>
+                        <td class="date">01/12</td>
+                        <td class="duration">7j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-30">35%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.5</td>
+                        <td class="task-name">Connexion/Inscription dynamique</td>
+                        <td class="task-owner">Dev 2</td>
+                        <td class="date">02/12</td>
+                        <td class="date">05/12</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-30">30%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.6</td>
+                        <td class="task-name">Gestion profil utilisateur</td>
+                        <td class="task-owner">Dev 3</td>
+                        <td class="date">02/12</td>
+                        <td class="date">05/12</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-30">30%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.7</td>
+                        <td class="task-name">Ajout/modification compétences</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">02/12</td>
+                        <td class="date">06/12</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-20">25%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">6.8</td>
+                        <td class="task-name">Moteur de recherche intelligent</td>
+                        <td class="task-owner">Dev 4</td>
+                        <td class="date">02/12</td>
+                        <td class="date">07/12</td>
+                        <td class="duration">6j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-20">20%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase3">
+                        <td class="task-id">6.9</td>
+                        <td class="task-name">Évaluation SQL</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">01/12</td>
+                        <td class="date">01/12</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase3">
+                        <td class="task-id">6.10</td>
+                        <td class="task-name">Présentation élèves PHP</td>
+                        <td class="task-owner">Binôme 3</td>
+                        <td class="date">01/12</td>
+                        <td class="date">01/12</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-30">30%</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 7: FONCTIONNALITÉS PRIORITÉ ÉLEVÉE -->
+                    <tr class="task-row phase-header" data-phase="phase3">
+                        <td colspan="7">PHASE 7 : FONCTIONNALITÉS PRIORITÉ ÉLEVÉE (Semaine 8-9)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.1</td>
+                        <td class="task-name">Backoffice - Gestion utilisateurs</td>
+                        <td class="task-owner">Dev 2</td>
+                        <td class="date">08/12</td>
+                        <td class="date">12/12</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">15%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.2</td>
+                        <td class="task-name">Backoffice - Gestion FAQ</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">08/12</td>
+                        <td class="date">11/12</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">15%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.3</td>
+                        <td class="task-name">Backoffice - Gestion CGU</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">12/12</td>
+                        <td class="date">13/12</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">10%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.4</td>
+                        <td class="task-name">Page contact fonctionnelle</td>
+                        <td class="task-owner">Dev 3</td>
+                        <td class="date">08/12</td>
+                        <td class="date">10/12</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-20">20%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.5</td>
+                        <td class="task-name">Validation & Évaluation continue</td>
+                        <td class="task-owner">Dev 4</td>
+                        <td class="date">09/12</td>
+                        <td class="date">14/12</td>
+                        <td class="duration">6j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">15%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.6</td>
+                        <td class="task-name">Profil de compétences dynamique</td>
+                        <td class="task-owner">Dev 3</td>
+                        <td class="date">11/12</td>
+                        <td class="date">15/12</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">15%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.7</td>
+                        <td class="task-name">Gestion projets et membres</td>
+                        <td class="task-owner">Dev 4</td>
+                        <td class="date">15/12</td>
+                        <td class="date">18/12</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">10%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase3">
+                        <td class="task-id">7.8</td>
+                        <td class="task-name">Tests et débugging</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">13/12</td>
+                        <td class="date">18/12</td>
+                        <td class="duration">6j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-20">20%</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 8: PRÉPARATION DÉMO -->
+                    <tr class="task-row phase-header" data-phase="phase4">
+                        <td colspan="7">PHASE 8 : PRÉPARATION DÉMONSTRATION CLIENT (Semaine 9)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">8.1</td>
+                        <td class="task-name">Rédaction document démonstration</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">15/12</td>
+                        <td class="date">17/12</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">10%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">8.2</td>
+                        <td class="task-name">Préparation PPT démonstration</td>
+                        <td class="task-owner">Designer</td>
+                        <td class="date">16/12</td>
+                        <td class="date">18/12</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-10">10%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">8.3</td>
+                        <td class="task-name">Répétition présentation</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">18/12</td>
+                        <td class="date">19/12</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">5%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase4">
+                        <td class="task-id">8.4</td>
+                        <td class="task-name">RDV CLIENT #2 - DÉMONSTRATION</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">19/12</td>
+                        <td class="date">19/12</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 9: FINALISATION -->
+                    <tr class="task-row phase-header" data-phase="phase4">
+                        <td colspan="7">PHASE 9 : FINALISATION & PRIORITÉ MOYENNE (Semaine 10-11)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">9.1</td>
+                        <td class="task-name">Ajustements post-démo client</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">05/01</td>
+                        <td class="date">08/01</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">9.2</td>
+                        <td class="task-name">Mot de passe oublié</td>
+                        <td class="task-owner">Dev 2</td>
+                        <td class="date">05/01</td>
+                        <td class="date">06/01</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">9.3</td>
+                        <td class="task-name">Recherche avancée multicritères</td>
+                        <td class="task-owner">Dev 4</td>
+                        <td class="date">06/01</td>
+                        <td class="date">09/01</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">9.4</td>
+                        <td class="task-name">Site responsive (adaptation mobile)</td>
+                        <td class="task-owner">Dev 1</td>
+                        <td class="date">08/01</td>
+                        <td class="date">12/01</td>
+                        <td class="duration">5j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">9.5</td>
+                        <td class="task-name">Optimisation performances</td>
+                        <td class="task-owner">Tech Lead</td>
+                        <td class="date">10/01</td>
+                        <td class="date">12/01</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">9.6</td>
+                        <td class="task-name">Sécurité et validation données</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">09/01</td>
+                        <td class="date">11/01</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase4">
+                        <td class="task-id">9.7</td>
+                        <td class="task-name">Évaluation HTML/CSS/PHP/JS</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">05/01</td>
+                        <td class="date">05/01</td>
+                        <td class="duration">1j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- PHASE 10: LIVRABLES FINAUX -->
+                    <tr class="task-row phase-header" data-phase="phase4">
+                        <td colspan="7">PHASE 10 : LIVRABLES FINAUX & SOUTENANCE (Semaine 11-12)</td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.1</td>
+                        <td class="task-name">Rédaction manuel utilisateur</td>
+                        <td class="task-owner">Dev 1+2</td>
+                        <td class="date">12/01</td>
+                        <td class="date">15/01</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.2</td>
+                        <td class="task-name">Rédaction manuel déploiement</td>
+                        <td class="task-owner">Tech Lead</td>
+                        <td class="date">12/01</td>
+                        <td class="date">15/01</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.3</td>
+                        <td class="task-name">Mise à jour document conception</td>
+                        <td class="task-owner">Dev 3</td>
+                        <td class="date">12/01</td>
+                        <td class="date">14/01</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.4</td>
+                        <td class="task-name">Finalisation document spécifications</td>
+                        <td class="task-owner">Chef projet</td>
+                        <td class="date">13/01</td>
+                        <td class="date">15/01</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.5</td>
+                        <td class="task-name">Tests finaux et débugging</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">13/01</td>
+                        <td class="date">16/01</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.6</td>
+                        <td class="task-name">Préparation PPT soutenance finale</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">14/01</td>
+                        <td class="date">17/01</td>
+                        <td class="duration">4j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.7</td>
+                        <td class="task-name">Répétitions soutenance</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">17/01</td>
+                        <td class="date">18/01</td>
+                        <td class="duration">2j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row" data-phase="phase4">
+                        <td class="task-id">10.8</td>
+                        <td class="task-name">Déploiement version finale</td>
+                        <td class="task-owner">Tech Lead</td>
+                        <td class="date">16/01</td>
+                        <td class="date">18/01</td>
+                        <td class="duration">3j</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">0%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="task-row milestone" data-phase="phase4">
+                        <td class="task-id">10.9</td>
+                        <td class="task-name">SOUTENANCE FINALE</td>
+                        <td class="task-owner">Équipe</td>
+                        <td class="date">19-25/01</td>
+                        <td class="date">19-25/01</td>
+                        <td class="duration">-</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-0">À venir</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'all';
+
+        function filterPhase(phase) {
+            currentFilter = phase;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter rows
+            const rows = document.querySelectorAll('.task-row');
+            rows.forEach(row => {
+                if (phase === 'all') {
+                    row.style.display = '';
+                } else {
+                    if (row.dataset.phase === phase) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.task-row:not(.phase-header)');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Export to Excel functionality
+        function exportToExcel() {
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Prepare data
+            const data = [];
+            
+            // Add headers
+            data.push(['ID Tâche', 'Description', 'Responsable', 'Début', 'Fin', 'Durée', 'Progression']);
+            
+            // Add rows
+            const rows = document.querySelectorAll('.task-row:not(.phase-header)');
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cells = row.querySelectorAll('td');
+                    const rowData = [
+                        cells[0].textContent,
+                        cells[1].textContent,
+                        cells[2].textContent,
+                        cells[3].textContent,
+                        cells[4].textContent,
+                        cells[5].textContent,
+                        cells[6].querySelector('.progress-fill').textContent
+                    ];
+                    data.push(rowData);
+                }
+            });
+            
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Diagramme Gantt FindIn');
+            
+            // Generate Excel file and download
+            XLSX.writeFile(wb, 'Diagramme_Gantt_FindIn_G2D.xlsx');
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Diagramme de Gantt FindIn chargé avec succès!');
+        });
+    </script>
+</body>
+</html>
