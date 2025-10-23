@@ -42,23 +42,10 @@
             letter-spacing: -0.5px;
         }
 
-        .logo-circle {
-            width: 32px;
+        .logo img {
             height: 32px;
-            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-        }
-
-        .logo-circle::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
+            width: auto;
+            object-fit: contain;
         }
 
         .nav-center {
@@ -665,11 +652,10 @@
             margin-bottom: 16px;
         }
 
-        .footer-logo {
-            width: 28px;
+        .footer-brand img {
             height: 28px;
-            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-            border-radius: 50%;
+            width: auto;
+            object-fit: contain;
         }
 
         .copyright {
@@ -697,8 +683,7 @@
 <body>
     <nav>
         <div class="logo">
-            <div class="logo-circle"></div>
-            <span>FindIn</span>
+            <img src="logo.png" alt="FindIn Logo">
         </div>
         <div class="nav-center">
             <a href="#fonctionnalites">Fonctionnalités</a>
@@ -877,8 +862,7 @@
         </div>
         <div class="footer-bottom">
             <div class="footer-brand">
-                <div class="footer-logo"></div>
-                <span style="font-weight: 700;">FindIn</span>
+                <img src="logo.png" alt="FindIn Logo">
             </div>
             <p class="copyright">© 2025 FindIn. All Rights Reserved.</p>
         </div>
