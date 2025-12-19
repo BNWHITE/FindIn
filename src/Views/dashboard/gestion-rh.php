@@ -252,7 +252,29 @@ $stats = $userModel->getStats();
         <!-- Liste des utilisateurs -->
         <div class="section">
             <h2><i class="fas fa-users"></i> Liste des utilisateurs (<?= count($allUsers) ?>)</h2>
-            <table>
+            
+            <!-- Barre de recherche -->
+            <div class="search-bar" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 200px;">
+                        <input type="text" id="searchInput" placeholder="🔍 Rechercher par nom, email..." 
+                               style="width: 100%; padding: 0.75rem 1rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 1rem;"
+                               onkeyup="filterTable()">
+                    </div>
+                    <div style="min-width: 150px;">
+                        <select id="roleFilter" onchange="filterTable()" 
+                                style="width: 100%; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                            <option value="">Tous les rôles</option>
+                            <option value="admin">Admin</option>
+                            <option value="rh">RH</option>
+                            <option value="manager">Manager</option>
+                            <option value="employe">Employé</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <table id="usersTable">
                 <thead>
                     <tr>
                         <th>Nom</th>
@@ -264,7 +286,7 @@ $stats = $userModel->getStats();
                 </thead>
                 <tbody>
                     <?php foreach ($allUsers as $u): ?>
-                    <tr>
+                    <tr data-role="<?= $u['role'] ?>">
                         <td><strong><?= htmlspecialchars($u['prenom'] . ' ' . $u['nom']) ?></strong></td>
                         <td><?= htmlspecialchars($u['email']) ?></td>
                         <td><span class="role-badge role-<?= $u['role'] ?>"><?= $u['role'] ?></span></td>

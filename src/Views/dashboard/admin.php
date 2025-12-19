@@ -238,6 +238,9 @@ try {
             <!-- Derniers utilisateurs -->
             <div class="section">
                 <h2><i class="fas fa-user-plus"></i> Derniers utilisateurs inscrits</h2>
+                <div class="search-bar-small">
+                    <input type="text" id="searchUsers" class="search-input-small" placeholder="Rechercher...">
+                </div>
                 <table>
                     <thead>
                         <tr>
@@ -246,10 +249,10 @@ try {
                             <th>Date</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="usersTableBody">
                         <?php if (!empty($recentUsers)): ?>
                             <?php foreach ($recentUsers as $u): ?>
-                            <tr>
+                            <tr data-nom="<?= htmlspecialchars(strtolower(($u['prenom'] ?? '') . ' ' . ($u['nom'] ?? ''))) ?>" data-role="<?= strtolower($u['role'] ?? 'employe') ?>">
                                 <td><?= htmlspecialchars(($u['prenom'] ?? '') . ' ' . ($u['nom'] ?? '')) ?></td>
                                 <td><span class="role-badge role-<?= $u['role'] ?? 'employe' ?>"><?= $u['role'] ?? 'employe' ?></span></td>
                                 <td><?= date('d/m/Y', strtotime($u['cree_le'] ?? 'now')) ?></td>
@@ -265,6 +268,9 @@ try {
             <!-- Dernières demandes de validation -->
             <div class="section">
                 <h2><i class="fas fa-clipboard-list"></i> Dernières demandes de validation</h2>
+                <div class="search-bar-small">
+                    <input type="text" id="searchValidations" class="search-input-small" placeholder="Rechercher...">
+                </div>
                 <table>
                     <thead>
                         <tr>
@@ -273,10 +279,12 @@ try {
                             <th>Statut</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="validationsTableBody">
                         <?php if (!empty($recentValidations)): ?>
                             <?php foreach ($recentValidations as $v): ?>
-                            <tr>
+                            <tr data-user="<?= htmlspecialchars(strtolower($v['prenom'] . ' ' . $v['nom'])) ?>" 
+                                data-competence="<?= htmlspecialchars(strtolower($v['competence'])) ?>"
+                                data-statut="<?= strtolower($v['statut']) ?>">
                                 <td><?= htmlspecialchars($v['prenom'] . ' ' . $v['nom']) ?></td>
                                 <td><?= htmlspecialchars($v['competence']) ?></td>
                                 <td><span class="status-badge status-<?= $v['statut'] ?>"><?= $v['statut'] ?></span></td>
@@ -316,6 +324,27 @@ try {
         .theme-toggle:hover {
             transform: scale(1.1);
         }
+        
+        /* Styles pour la recherche */
+        .search-bar-small {
+            margin-bottom: 1rem;
+        }
+        .search-input-small {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .search-input-small:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.2);
+        }
+        .hidden { display: none !important; }
     </style>
     
     <script>
@@ -340,7 +369,59 @@ try {
             document.documentElement.setAttribute('data-theme', savedTheme);
             const icon = document.getElementById('theme-icon');
             icon.className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            
+            // Recherche utilisateurs
+            const searchUsers = document.getElementById('searchUsers');
+            if (searchUsers) {
+                searchUsers.addEventListener('keyup', filterUsers);
+            }
+            
+            // Recherche validations
+            const searchValidations = document.getElementById('searchValidations');
+            if (searchValidations) {
+                searchValidations.addEventListener('keyup', filterValidations);
+            }
         });
+        
+        function filterUsers() {
+            const searchTerm = document.getElementById('searchUsers').value.toLowerCase().trim();
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr[data-nom]');
+            
+            rows.forEach(row => {
+                const nom = row.getAttribute('data-nom') || '';
+                const role = row.getAttribute('data-role') || '';
+                
+                const matchSearch = searchTerm === '' || 
+                    nom.includes(searchTerm) || 
+                    role.includes(searchTerm);
+                
+                row.classList.toggle('hidden', !matchSearch);
+            });
+        }
+        
+        function filterValidations() {
+            const searchTerm = document.getElementById('searchValidations').value.toLowerCase().trim();
+            const tbody = document.getElementById('validationsTableBody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr[data-user]');
+            
+            rows.forEach(row => {
+                const user = row.getAttribute('data-user') || '';
+                const competence = row.getAttribute('data-competence') || '';
+                const statut = row.getAttribute('data-statut') || '';
+                
+                const matchSearch = searchTerm === '' || 
+                    user.includes(searchTerm) || 
+                    competence.includes(searchTerm) ||
+                    statut.includes(searchTerm);
+                
+                row.classList.toggle('hidden', !matchSearch);
+            });
+        }
     </script>
 </body>
 </html>

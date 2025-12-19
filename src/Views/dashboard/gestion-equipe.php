@@ -260,6 +260,14 @@ $validatedCount = count(array_filter($teamCompetences, fn($c) => $c['validee'] =
         <div class="section">
             <h2><i class="fas fa-user-friends"></i> Membres de mon équipe (<?= $teamCount ?>)</h2>
             
+            <!-- Barre de recherche -->
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchMembers" class="search-input" placeholder="Rechercher un membre par nom ou email...">
+                </div>
+            </div>
+            
             <?php if (empty($teamMembers)): ?>
                 <div class="empty-state">
                     <i class="fas fa-user-plus"></i>
@@ -267,9 +275,9 @@ $validatedCount = count(array_filter($teamCompetences, fn($c) => $c['validee'] =
                     <p><small>Demandez au RH d'assigner des employés à votre équipe</small></p>
                 </div>
             <?php else: ?>
-                <div class="team-grid">
+                <div class="team-grid" id="teamGrid">
                     <?php foreach ($teamMembers as $member): ?>
-                    <div class="team-card">
+                    <div class="team-card" data-nom="<?= htmlspecialchars(strtolower($member['prenom'] . ' ' . $member['nom'])) ?>" data-email="<?= htmlspecialchars(strtolower($member['email'])) ?>">
                         <div class="team-avatar">
                             <?= strtoupper(substr($member['prenom'] ?? 'U', 0, 1) . substr($member['nom'] ?? '', 0, 1)) ?>
                         </div>
@@ -299,7 +307,21 @@ $validatedCount = count(array_filter($teamCompetences, fn($c) => $c['validee'] =
         <?php if (!empty($teamCompetences)): ?>
         <div class="section">
             <h2><i class="fas fa-chart-bar"></i> Compétences de l'équipe</h2>
-            <table>
+            
+            <!-- Barre de recherche compétences -->
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchCompetences" class="search-input" placeholder="Rechercher par collaborateur ou compétence...">
+                </div>
+                <select id="filterStatus" class="filter-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="validee">Validées</option>
+                    <option value="pending">En attente</option>
+                </select>
+            </div>
+            
+            <table id="competencesTable">>
                 <thead>
                     <tr>
                         <th>Collaborateur</th>
@@ -308,9 +330,11 @@ $validatedCount = count(array_filter($teamCompetences, fn($c) => $c['validee'] =
                         <th>Statut</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="competencesBody">
                     <?php foreach ($teamCompetences as $c): ?>
-                    <tr>
+                    <tr data-collaborateur="<?= htmlspecialchars(strtolower($c['prenom'] . ' ' . $c['nom'])) ?>" 
+                        data-competence="<?= htmlspecialchars(strtolower($c['competence'])) ?>"
+                        data-status="<?= $c['validee'] ? 'validee' : 'pending' ?>">
                         <td><?= htmlspecialchars($c['prenom'] . ' ' . $c['nom']) ?></td>
                         <td><?= htmlspecialchars($c['competence']) ?></td>
                         <td>
@@ -331,6 +355,63 @@ $validatedCount = count(array_filter($teamCompetences, fn($c) => $c['validee'] =
         </div>
         <?php endif; ?>
     </div>
+    
+    <!-- Styles pour la recherche -->
+    <style>
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .search-input-wrapper {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+        .search-input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2);
+        }
+        .filter-select {
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        .hidden { display: none !important; }
+    </style>
     
     <!-- Toggle Theme Button -->
     <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
@@ -382,7 +463,104 @@ $validatedCount = count(array_filter($teamCompetences, fn($c) => $c['validee'] =
             document.documentElement.setAttribute('data-theme', savedTheme);
             const icon = document.getElementById('theme-icon');
             icon.className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            
+            // Recherche des membres de l'équipe
+            const searchMembers = document.getElementById('searchMembers');
+            if (searchMembers) {
+                searchMembers.addEventListener('keyup', filterMembers);
+            }
+            
+            // Recherche des compétences
+            const searchCompetences = document.getElementById('searchCompetences');
+            const filterStatus = document.getElementById('filterStatus');
+            if (searchCompetences) {
+                searchCompetences.addEventListener('keyup', filterCompetences);
+            }
+            if (filterStatus) {
+                filterStatus.addEventListener('change', filterCompetences);
+            }
         });
+        
+        function filterMembers() {
+            const searchTerm = document.getElementById('searchMembers').value.toLowerCase().trim();
+            const teamGrid = document.getElementById('teamGrid');
+            if (!teamGrid) return;
+            
+            const cards = teamGrid.querySelectorAll('.team-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const nom = card.getAttribute('data-nom') || '';
+                const email = card.getAttribute('data-email') || '';
+                
+                const matchSearch = searchTerm === '' || 
+                    nom.includes(searchTerm) || 
+                    email.includes(searchTerm);
+                
+                if (matchSearch) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+            
+            // Message si aucun résultat
+            let noResults = teamGrid.querySelector('.no-results');
+            if (visibleCount === 0) {
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.innerHTML = '<i class="fas fa-search"></i><p>Aucun membre trouvé</p>';
+                    teamGrid.appendChild(noResults);
+                }
+                noResults.style.display = 'block';
+            } else if (noResults) {
+                noResults.style.display = 'none';
+            }
+        }
+        
+        function filterCompetences() {
+            const searchTerm = document.getElementById('searchCompetences')?.value.toLowerCase().trim() || '';
+            const statusFilter = document.getElementById('filterStatus')?.value || '';
+            const tbody = document.getElementById('competencesBody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const collaborateur = row.getAttribute('data-collaborateur') || '';
+                const competence = row.getAttribute('data-competence') || '';
+                const status = row.getAttribute('data-status') || '';
+                
+                const matchSearch = searchTerm === '' || 
+                    collaborateur.includes(searchTerm) || 
+                    competence.includes(searchTerm);
+                const matchStatus = statusFilter === '' || status === statusFilter;
+                
+                if (matchSearch && matchStatus) {
+                    row.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+            
+            // Message si aucun résultat
+            let noResults = tbody.querySelector('.no-results-row');
+            if (visibleCount === 0) {
+                if (!noResults) {
+                    noResults = document.createElement('tr');
+                    noResults.className = 'no-results-row';
+                    noResults.innerHTML = '<td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 2rem;">Aucune compétence trouvée</td>';
+                    tbody.appendChild(noResults);
+                }
+                noResults.style.display = 'table-row';
+            } else if (noResults) {
+                noResults.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
