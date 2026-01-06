@@ -1,7 +1,0 @@
-{
-    "name": "findin/mvp",
-    "description": "FindIN MVP - small HR skills management",
-    "require": {
-        "smalot/pdfparser": "^2.0"
-    }
-}

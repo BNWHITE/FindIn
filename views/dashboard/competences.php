@@ -118,14 +118,25 @@ $categories = [
         <div class="search-bar">
             <div class="search-wrapper">
                 <i class="fas fa-search"></i>
-                <input type="text" class="search-input" placeholder="Rechercher une compétence..." style="padding-left: 2.5rem; width: 100%;">
+                <input type="text" class="search-input" id="searchCompetence" placeholder="Rechercher une compétence..." style="padding-left: 2.5rem; width: 100%;">
             </div>
-            <button class="filter-btn"><i class="fas fa-filter"></i> Filtres</button>
+            <select class="filter-btn" id="filterCategory" style="cursor: pointer;">
+                <option value="">Toutes catégories</option>
+                <option value="developpement">Développement</option>
+                <option value="base de donnees">Base de données</option>
+                <option value="devops">DevOps</option>
+                <option value="savoir-etre">Soft Skills</option>
+            </select>
+            <select class="filter-btn" id="filterStatus" style="cursor: pointer;">
+                <option value="">Tous les statuts</option>
+                <option value="validated">Validés</option>
+                <option value="pending">En attente</option>
+            </select>
         </div>
         
         <h2 class="section-title">Compétences Techniques</h2>
-        <div class="competence-grid">
-            <div class="competence-card">
+        <div class="competence-grid" id="technicalGrid">
+            <div class="competence-card" data-name="php laravel" data-category="developpement" data-status="validated">
                 <div class="competence-header">
                     <div class="competence-icon purple"><i class="fab fa-php"></i></div>
                     <div>
@@ -146,7 +157,7 @@ $categories = [
                 </div>
             </div>
             
-            <div class="competence-card">
+            <div class="competence-card" data-name="javascript react" data-category="developpement" data-status="validated">
                 <div class="competence-header">
                     <div class="competence-icon blue"><i class="fab fa-js"></i></div>
                     <div>
@@ -167,7 +178,7 @@ $categories = [
                 </div>
             </div>
             
-            <div class="competence-card">
+            <div class="competence-card" data-name="mysql postgresql" data-category="base de donnees" data-status="validated">
                 <div class="competence-header">
                     <div class="competence-icon green"><i class="fas fa-database"></i></div>
                     <div>
@@ -188,7 +199,7 @@ $categories = [
                 </div>
             </div>
             
-            <div class="competence-card">
+            <div class="competence-card" data-name="docker kubernetes" data-category="devops" data-status="pending">
                 <div class="competence-header">
                     <div class="competence-icon yellow"><i class="fab fa-docker"></i></div>
                     <div>
@@ -211,8 +222,8 @@ $categories = [
         </div>
         
         <h2 class="section-title">Soft Skills</h2>
-        <div class="competence-grid">
-            <div class="competence-card">
+        <div class="competence-grid" id="softSkillsGrid">
+            <div class="competence-card" data-name="travail en equipe" data-category="savoir-etre" data-status="validated">
                 <div class="competence-header">
                     <div class="competence-icon purple"><i class="fas fa-users"></i></div>
                     <div>
@@ -233,7 +244,7 @@ $categories = [
                 </div>
             </div>
             
-            <div class="competence-card">
+            <div class="competence-card" data-name="communication" data-category="savoir-etre" data-status="validated">
                 <div class="competence-header">
                     <div class="competence-icon blue"><i class="fas fa-comments"></i></div>
                     <div>
@@ -302,6 +313,68 @@ $categories = [
         
         function openModal() { document.getElementById('addModal').classList.add('active'); }
         function closeModal() { document.getElementById('addModal').classList.remove('active'); }
+        
+        // Recherche et filtrage des compétences
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchCompetence');
+            const filterCategory = document.getElementById('filterCategory');
+            const filterStatus = document.getElementById('filterStatus');
+            
+            if (searchInput) searchInput.addEventListener('keyup', filterCompetences);
+            if (filterCategory) filterCategory.addEventListener('change', filterCompetences);
+            if (filterStatus) filterStatus.addEventListener('change', filterCompetences);
+        });
+        
+        function filterCompetences() {
+            const searchTerm = document.getElementById('searchCompetence')?.value.toLowerCase().trim() || '';
+            const categoryFilter = document.getElementById('filterCategory')?.value.toLowerCase() || '';
+            const statusFilter = document.getElementById('filterStatus')?.value.toLowerCase() || '';
+            
+            // Obtenir toutes les cartes de compétences
+            const allCards = document.querySelectorAll('.competence-card');
+            
+            allCards.forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                const category = card.getAttribute('data-category') || '';
+                const status = card.getAttribute('data-status') || '';
+                
+                const matchSearch = searchTerm === '' || name.includes(searchTerm);
+                const matchCategory = categoryFilter === '' || category === categoryFilter;
+                const matchStatus = statusFilter === '' || status === statusFilter;
+                
+                if (matchSearch && matchCategory && matchStatus) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Vérifier si des sections sont vides
+            checkEmptySections();
+        }
+        
+        function checkEmptySections() {
+            const technicalGrid = document.getElementById('technicalGrid');
+            const softSkillsGrid = document.getElementById('softSkillsGrid');
+            
+            if (technicalGrid) {
+                const visibleTech = technicalGrid.querySelectorAll('.competence-card[style*="display: block"], .competence-card:not([style*="display"])');
+                const actualVisible = Array.from(visibleTech).filter(c => c.style.display !== 'none');
+                const techSection = technicalGrid.previousElementSibling;
+                if (techSection && techSection.classList.contains('section-title')) {
+                    techSection.style.display = actualVisible.length > 0 ? 'block' : 'none';
+                }
+            }
+            
+            if (softSkillsGrid) {
+                const visibleSoft = softSkillsGrid.querySelectorAll('.competence-card[style*="display: block"], .competence-card:not([style*="display"])');
+                const actualVisible = Array.from(visibleSoft).filter(c => c.style.display !== 'none');
+                const softSection = softSkillsGrid.previousElementSibling;
+                if (softSection && softSection.classList.contains('section-title')) {
+                    softSection.style.display = actualVisible.length > 0 ? 'block' : 'none';
+                }
+            }
+        }
     </script>
 </body>
 </html>

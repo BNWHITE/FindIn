@@ -1,76 +1,75 @@
-# FindIN - Plateforme de Gestion des Compétences (MVP)
+# FindIN - Plateforme de Gestion des Compétences
 
-Application web pour la gestion des compétences en entreprise, développée avec PHP, MySQL, HTML, CSS et JavaScript.
+Application web pour la gestion des compétences en entreprise.
 
 ## 🚀 Fonctionnalités
 
+- **Gestion des utilisateurs** : Employés, Managers, RH, Administrateurs
+- **Compétences** : Création, évaluation, suivi des niveaux
+- **Dashboard** : 7 pages interactives (Accueil, Projets, Réunions, Documents, Certifications, Messages, Profil)
+- **Recherche** : Recherche de collaborateurs par compétences
+- **Authentification** : Connexion standard + Google OAuth
 
 ## 📦 Installation
 
-### 1. Prérequis
+### Prérequis
+- PHP 8.0+
+- MySQL 5.7+ (XAMPP recommandé)
+- Navigateur moderne
 
-### 2. Clone du projet
+### Configuration
+
+1. **Cloner le projet**
 ```bash
-git clone https://github.com/votre-username/findin-mvp.git
-cd findin-mvp
+git clone https://github.com/BNWHITE/FindIn.git
+cd FindIn
 ```
 
-## 🔐 Démarrage HTTPS
+2. **Configurer la base de données**
+- Démarrer MySQL (XAMPP)
+- Créer la base \`gestion_competences\`
+- Importer le schéma SQL
 
-### Option 1 : Démarrage Simple (HTTP)
+3. **Configurer les variables** (optionnel)
+```bash
+export DB_HOST=127.0.0.1
+export DB_NAME=gestion_competences
+export DB_USER=root
+export DB_PASS=
+```
+
+## 🚀 Démarrage
+
 ```bash
 php start.php
 # ou
 php -S localhost:8000 router.php
 ```
 
-### Option 2 : Démarrage Sécurisé (HTTPS avec Caddy)
-```bash
-# Installer Caddy (macOS)
-brew install caddy
+Accéder à : http://localhost:8000
 
-# Terminal 1 : Lancer le serveur PHP
-php start.php
+## 🔐 Comptes de test
 
-# Terminal 2 : Lancer le proxy HTTPS
-caddy run
-
-# Accéder à : https://localhost:8443
-```
-
-### Option 3 : Script Automatisé
-```bash
-php start_secure.php
-# Génère automatiquement les certificats SSL
-```
-
-### Headers de Sécurité Inclus
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Strict-Transport-Security` (HSTS) en mode HTTPS
-- `Permissions-Policy`
+| Email | Mot de passe | Rôle |
+|-------|--------------|------|
+| admin@findin.fr | admin123 | Admin |
+| test@findin.fr | test123 | Employé |
 
 ## 🏗️ Architecture
 
-MVC (Model-View-Controller)
-├── Models/      ← Logique métier et données
-├── Views/       ← Templates HTML
-├── Controllers/ ← Contrôleurs d'actions
-└── Assets/      ← CSS, JS, Images
+\`\`\`
+FindIN/
+├── index.php          # Point d'entrée
+├── router.php         # Routage des URLs
+├── start.php          # Démarrage serveur
+├── config/            # Configuration
+├── controllers/       # Contrôleurs MVC
+├── models/            # Modèles de données
+├── views/             # Templates HTML
+├── assets/            # CSS, JS, Images
+└── uploads/           # Fichiers uploadés
+\`\`\`
 
-## Notes CV parsing & uploads
+## 📝 Licence
 
-- CV parsing benefits from the `pdftotext` binary (part of poppler). On macOS install with:
-
-	brew install poppler
-
-- For improved in-PHP PDF parsing install composer dependencies:
-
-	composer install
-
-	This will install `smalot/pdfparser` which the code will automatically use when available.
-
-- Upload locations: `uploads/cvs/`, `uploads/photos/`, `uploads/meetings/`, `uploads/tests/`, `uploads/reports/`.
-- CV upload limits: 8MB, allowed: pdf, docx, txt. Photo limits: 5MB, allowed: jpg/jpeg/png/webp.
+MIT License - Voir [License.md](License.md)

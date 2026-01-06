@@ -54,6 +54,14 @@ $routes = [
     'dashboard/equipe' => function() { require 'views/dashboard/equipe.php'; },
     'dashboard/parametres' => function() { require 'views/dashboard/parametres.php'; },
     
+    // Nouvelles routes Gestion RH et Manager
+    'dashboard/gestion-rh' => function() { require 'views/dashboard/gestion-rh.php'; },
+    'dashboard/gestion-equipe' => function() { require 'views/dashboard/gestion-equipe.php'; },
+    'gestion-rh' => function() { require 'views/dashboard/gestion-rh.php'; },
+    'gestion-equipe' => function() { require 'views/dashboard/gestion-equipe.php'; },
+    'dashboard/admin' => function() { require 'views/dashboard/admin.php'; },
+    'admin-panel' => function() { require 'views/dashboard/admin.php'; },
+    
     // Dashboard routes
     'competences' => function() { require 'views/competences.php'; },
     'profile' => function() { require 'views/profile.php'; },

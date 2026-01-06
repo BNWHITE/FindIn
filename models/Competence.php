@@ -25,36 +25,39 @@ class Competence {
     }
 
     public function getUserCompetences($userId) {
-        $sql = "SELECT cu.*, c.nom as competence_nom, c.type_competence, 
-                       cc.nom as categorie
-                FROM competences_utilisateurs cu
-                JOIN competences c ON cu.id_competence = c.id
-                LEFT JOIN categories_competences cc ON c.id_categorie = cc.id
-                WHERE cu.id_utilisateur = :user_id
-                ORDER BY cc.nom, c.nom";
+        // Essayer d'abord avec user_competences (MySQL)
+        $sql = "SELECT uc.*, c.nom as competence_nom, c.type_competence
+                FROM user_competences uc
+                JOIN competences c ON uc.competence_id = c.id
+                WHERE uc.user_id = :user_id
+                ORDER BY c.nom";
         
         try {
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':user_id' => $userId]);
             return $stmt->fetchAll();
         } catch (Exception $e) {
-            // Version simplifiée si les jointures échouent
-            $sql = "SELECT cu.*, c.nom as competence_nom 
-                    FROM competences_utilisateurs cu
-                    JOIN competences c ON cu.id_competence = c.id
-                    WHERE cu.id_utilisateur = :user_id
-                    ORDER BY c.nom";
-            
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([':user_id' => $userId]);
-            return $stmt->fetchAll();
+            // Fallback vers competences_utilisateurs (ancienne structure)
+            try {
+                $sql = "SELECT cu.*, c.nom as competence_nom 
+                        FROM competences_utilisateurs cu
+                        JOIN competences c ON cu.id_competence = c.id
+                        WHERE cu.id_utilisateur = :user_id
+                        ORDER BY c.nom";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([':user_id' => $userId]);
+                return $stmt->fetchAll();
+            } catch (Exception $e2) {
+                return [];
+            }
         }
     }
 
     public function addUserCompetence($userId, $competenceId, $niveauDeclare) {
-        $sql = "INSERT INTO competences_utilisateurs 
-                (id_utilisateur, id_competence, niveau_declare, date_validation) 
-                VALUES (:user_id, :competence_id, :niveau, datetime('now'))";
+        $sql = "INSERT INTO user_competences 
+                (user_id, competence_id, niveau_declare) 
+                VALUES (:user_id, :competence_id, :niveau)";
         
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
@@ -131,7 +134,100 @@ class Competence {
 
     public function getAllCategories() {
         $sql = "SELECT * FROM categories_competences ORDER BY nom";
-        return $this->db->query($sql)->fetchAll();
+        try {
+            return $this->db->query($sql)->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // ========== CRUD COMPETENCES ==========
+    
+    public function createCompetence($data) {
+        $sql = "INSERT INTO competences (nom, description, type_competence) VALUES (:nom, :description, :type)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':nom' => $data['nom'],
+            ':description' => $data['description'] ?? '',
+            ':type' => $data['type'] ?? 'technique'
+        ]);
+    }
+
+    public function updateCompetence($id, $data) {
+        $sql = "UPDATE competences SET nom = :nom, description = :description, type_competence = :type WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':nom' => $data['nom'],
+            ':description' => $data['description'] ?? '',
+            ':type' => $data['type'] ?? 'technique',
+            ':id' => $id
+        ]);
+    }
+
+    public function deleteCompetence($id) {
+        // D'abord supprimer les liaisons
+        $this->db->prepare("DELETE FROM user_competences WHERE competence_id = :id")->execute([':id' => $id]);
+        $this->db->prepare("DELETE FROM demandes_validation WHERE competence_id = :id")->execute([':id' => $id]);
+        // Puis la compétence
+        $sql = "DELETE FROM competences WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':id' => $id]);
+    }
+
+    // ========== COMPETENCES UTILISATEUR ==========
+    
+    public function addCompetenceToUser($userId, $competenceId, $niveau = 1) {
+        // Vérifier si déjà existant
+        $check = $this->db->prepare("SELECT * FROM user_competences WHERE user_id = :uid AND competence_id = :cid");
+        $check->execute([':uid' => $userId, ':cid' => $competenceId]);
+        if ($check->fetch()) {
+            // Mettre à jour
+            $sql = "UPDATE user_competences SET niveau_declare = :niveau WHERE user_id = :uid AND competence_id = :cid";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([':niveau' => $niveau, ':uid' => $userId, ':cid' => $competenceId]);
+        }
+        
+        $sql = "INSERT INTO user_competences (user_id, competence_id, niveau_declare) VALUES (:uid, :cid, :niveau)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':uid' => $userId, ':cid' => $competenceId, ':niveau' => $niveau]);
+    }
+
+    public function removeCompetenceFromUser($userId, $competenceId) {
+        $sql = "DELETE FROM user_competences WHERE user_id = :uid AND competence_id = :cid";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':uid' => $userId, ':cid' => $competenceId]);
+    }
+
+    public function updateUserCompetenceLevel($userId, $competenceId, $niveau) {
+        $sql = "UPDATE user_competences SET niveau_declare = :niveau WHERE user_id = :uid AND competence_id = :cid";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':niveau' => $niveau, ':uid' => $userId, ':cid' => $competenceId]);
+    }
+
+    public function getUserCompetencesWithDetails($userId) {
+        $sql = "SELECT uc.*, c.nom, c.description, c.type_competence 
+                FROM user_competences uc 
+                JOIN competences c ON uc.competence_id = c.id 
+                WHERE uc.user_id = :uid 
+                ORDER BY c.nom";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':uid' => $userId]);
+        return $stmt->fetchAll();
+    }
+
+    public function requestValidation($userId, $competenceId, $niveau) {
+        $sql = "INSERT INTO demandes_validation (user_id, competence_id, niveau_demande) VALUES (:uid, :cid, :niveau)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':uid' => $userId, ':cid' => $competenceId, ':niveau' => $niveau]);
+    }
+
+    public function getCompetenceStats() {
+        $stats = [];
+        $stats['total'] = $this->db->query("SELECT COUNT(*) FROM competences")->fetchColumn();
+        $stats['techniques'] = $this->db->query("SELECT COUNT(*) FROM competences WHERE type_competence = 'technique'")->fetchColumn();
+        $stats['soft'] = $this->db->query("SELECT COUNT(*) FROM competences WHERE type_competence = 'soft'")->fetchColumn();
+        $stats['utilisations'] = $this->db->query("SELECT COUNT(*) FROM user_competences")->fetchColumn();
+        return $stats;
     }
 }
 ?>

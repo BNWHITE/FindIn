@@ -1,0 +1,73 @@
+# ======================
+# FindIn - .gitignore
+# ======================
+
+# Système
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# IDE / Éditeurs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# PHP / Composer
+/vendor/
+composer.lock
+
+# Logs
+*.log
+logs/
+/logs
+
+# Cache
+/cache/
+*.cache
+.php_cs.cache
+
+# Environnement
+.env
+.env.local
+.env.*.local
+config/local.php
+
+# Uploads utilisateurs (garder le dossier, ignorer le contenu)
+uploads/*
+!uploads/.gitkeep
+
+# Base de données
+*.sqlite
+*.sqlite3
+*.db
+database.sqlite
+
+# SSL / Certificats
+ssl/
+*.pem
+*.crt
+*.key
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Tests
+/tests/
+coverage/
+
+# Documentation générée
+/docs/generated/
+
+# OS générés
+ehthumbs.db
+Desktop.ini
