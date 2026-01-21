@@ -205,6 +205,23 @@ if (isset($_GET['delete']) && $_GET['delete']) {
             border: 2px dashed rgba(147,51,234,0.35);
         }
         .cv-card.generator-card:hover { border-style: solid; }
+        .cv-card.empty-state-card {
+            background: var(--bg-card);
+            border: 1px dashed var(--border-color);
+        }
+        .empty-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--bg-hover);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
         .generator-content {
             display: flex;
             flex-direction: column;
@@ -319,34 +336,10 @@ if (isset($_GET['delete']) && $_GET['delete']) {
         </div>
         
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon purple"><i class="fas fa-file-alt"></i></div>
-                <div class="stat-content">
-                    <div class="stat-value"><?= $stats['total'] ?></div>
-                    <div class="stat-label">CVs uploadés</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon blue"><i class="fas fa-brain"></i></div>
-                <div class="stat-content">
-                    <div class="stat-value"><?= $stats['competences'] ?></div>
-                    <div class="stat-label">Compétences extraites</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon green"><i class="fas fa-chart-line"></i></div>
-                <div class="stat-content">
-                    <div class="stat-value"><?= $stats['score_ats'] ?>%</div>
-                    <div class="stat-label">Score ATS moyen</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon yellow"><i class="fas fa-eye"></i></div>
-                <div class="stat-content">
-                    <div class="stat-value"><?= $stats['vues'] ?></div>
-                    <div class="stat-label">Vues recruteurs</div>
-                </div>
-            </div>
+            <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-file-alt"></i></div><div class="stat-value"><?= $stats['total'] ?></div><div class="stat-label">CVs uploadés</div></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-brain"></i></div><div class="stat-value"><?= $stats['competences'] ?></div><div class="stat-label">Compétences extraites</div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="fas fa-chart-line"></i></div><div class="stat-value"><?= $stats['score_ats'] ?>%</div><div class="stat-label">Score ATS moyen</div></div>
+            <div class="stat-card"><div class="stat-icon yellow"><i class="fas fa-eye"></i></div><div class="stat-value"><?= $stats['vues'] ?></div><div class="stat-label">Vues recruteurs</div></div>
         </div>
         
         <form method="POST" enctype="multipart/form-data" id="uploadForm">
@@ -383,6 +376,15 @@ if (isset($_GET['delete']) && $_GET['delete']) {
                 </div>
             </div>
             
+            <?php if (empty($documents)): ?>
+            <div class="cv-card empty-state-card">
+                <div class="generator-content">
+                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+                    <h3>Aucun CV uploadé</h3>
+                    <p>Glissez un fichier ci-dessus ou cliquez pour en ajouter un</p>
+                </div>
+            </div>
+            <?php else: ?>
             <?php foreach ($documents as $index => $doc): 
                 $isPrimary = $index === 0;
                 $filename = $doc['nom_fichier'] ?? basename($doc['chemin_fichier']);
@@ -436,6 +438,7 @@ if (isset($_GET['delete']) && $_GET['delete']) {
                 </div>
             </div>
             <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </main>
     
