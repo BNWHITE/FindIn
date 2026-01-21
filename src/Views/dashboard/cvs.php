@@ -80,6 +80,7 @@ if (isset($_GET['delete']) && $_GET['delete']) {
     <link href="/assets/css/dashboard.css" rel="stylesheet">
     <style>
         .upload-zone {
+            display: block;
             background: linear-gradient(135deg, rgba(147,51,234,0.08), rgba(59,130,246,0.08));
             border: 2px dashed rgba(147,51,234,0.4);
             border-radius: 16px;
@@ -94,9 +95,9 @@ if (isset($_GET['delete']) && $_GET['delete']) {
             background: linear-gradient(135deg, rgba(147,51,234,0.15), rgba(59,130,246,0.15));
         }
         .upload-zone input[type="file"] { display: none; }
-        .upload-zone i { font-size: 2.5rem; color: var(--accent-purple); margin-bottom: 0.75rem; display: block; }
-        .upload-zone h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
-        .upload-zone p { color: var(--text-secondary); font-size: 0.85rem; }
+        .upload-zone > i { font-size: 2.5rem; color: var(--accent-purple); margin-bottom: 0.75rem; display: block; }
+        .upload-zone > h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-primary); }
+        .upload-zone > p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
         .upload-zone .supported-formats { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
         .format-badge { background: var(--bg-card); padding: 0.25rem 0.6rem; border-radius: 15px; font-size: 0.7rem; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.25rem; }
 
