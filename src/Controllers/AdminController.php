@@ -1,47 +1,87 @@
 <?php
-namespace App\Controllers;
-
-use App\Models\Competence;
+// controllers/AdminController.php
+require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/Competence.php';
+require_once __DIR__ . '/../Models/Department.php';
+require_once __DIR__ . '/../Controllers/BaseController.php';
 
 class AdminController extends BaseController {
-    
-    public function competences() {
-        // 1. Sécurité : Vérifier si l'utilisateur est connecté et admin
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $_SESSION['error'] = "Accès refusé.";
-            header('Location: /login');
-            exit();
-        }
+    private $userModel;
+    private $competenceModel;
+    private $departmentModel;
 
-        $model = new Competence();
+    public function __construct() {
+        parent::__construct();
+        $this->checkRole(['admin']);
+        $this->userModel = new User();
+        $this->competenceModel = new Competence();
+        $this->departmentModel = new Department();
+    }
 
-        // 2. Traitement du formulaire d'ajout (POST)
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_save'])) {
-            $nom = trim($_POST['nom'] ?? '');
-            
-            if (empty($nom)) {
-                $_SESSION['error'] = "Le nom est obligatoire.";
-            } else {
-                $success = $model->create([
-                    'nom' => $nom,
-                    'type' => $_POST['type_competence'] ?? 'technique',
-                    'description' => $_POST['description'] ?? ''
-                ]);
+    public function dashboard() {
+        $users = $this->userModel->getAllUsers();
+        $competences = $this->competenceModel->getAllCompetences();
+        
+        $data = [
+            'totalUsers' => count($users),
+            'totalCompetences' => count($competences),
+            'recentUsers' => array_slice($users, 0, 5),
+            'stats' => $this->getStats()
+        ];
+        
+        $this->view('admin/dashboard', $data);
+    }
 
-                if ($success) {
-                    $_SESSION['success'] = "Données enregistrées dans Supabase !";
-                    header('Location: /admin/competences'); // Évite le double envoi
-                    exit();
+    public function users() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (isset($_POST['update_role'])) {
+                $userId = $_POST['user_id'];
+                $role = $_POST['role'];
+                
+                if ($this->userModel->setUserRole($userId, $role)) {
+                    $data['success'] = 'Rôle mis à jour avec succès';
                 } else {
-                    $_SESSION['error'] = "Erreur technique lors de l'enregistrement.";
+                    $data['error'] = 'Erreur lors de la mise à jour du rôle';
                 }
             }
         }
-
-        // 3. Récupération des données pour la vue
-        $competences = $model->getAll();
         
-        // 4. Chargement de la vue
-        $this->render('admin_competences', ['competences' => $competences]);
+        $users = $this->userModel->getAllUsers();
+        $departements = $this->departmentModel->getAllDepartements();
+        
+        $data = [
+            'users' => $users,
+            'departements' => $departements
+        ];
+        
+        $this->view('admin/users', $data);
+    }
+
+    public function competences() {
+        $competences = $this->competenceModel->getAllCompetences();
+        
+        $data = [
+            'competences' => $competences
+        ];
+        
+        $this->view('admin/competences', $data);
+    }
+
+    private function getStats() {
+        // Statistiques basiques
+        return [
+            'users_by_role' => [
+                'employe' => 0,
+                'manager' => 0,
+                'rh' => 0,
+                'admin' => 0
+            ],
+            'competences_by_type' => [
+                'savoir_faire' => 0,
+                'savoir_etre' => 0,
+                'expertise' => 0
+            ]
+        ];
     }
 }
+?>
