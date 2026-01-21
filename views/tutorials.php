@@ -92,7 +92,7 @@
                 <button class="level-tab">⚡ Avancé</button>
             </div>
             <div class="tutorials-grid">
-                <div class="tutorial-card">
+                <div class="tutorial-card" data-level="beginner">
                     <div class="tutorial-header">
                         <i class="fas fa-play-circle"></i>
                         <span class="tutorial-level level-beginner">Débutant</span>
@@ -108,7 +108,7 @@
                         <a href="#" class="btn-start"><i class="fas fa-play"></i> Commencer</a>
                     </div>
                 </div>
-                <div class="tutorial-card">
+                <div class="tutorial-card" data-level="beginner">
                     <div class="tutorial-header">
                         <i class="fas fa-user-plus"></i>
                         <span class="tutorial-level level-beginner">Débutant</span>
@@ -124,7 +124,7 @@
                         <a href="#" class="btn-start"><i class="fas fa-play"></i> Continuer</a>
                     </div>
                 </div>
-                <div class="tutorial-card">
+                <div class="tutorial-card" data-level="intermediate">
                     <div class="tutorial-header">
                         <i class="fas fa-search-plus"></i>
                         <span class="tutorial-level level-intermediate">Intermédiaire</span>
@@ -140,7 +140,7 @@
                         <a href="#" class="btn-start"><i class="fas fa-play"></i> Commencer</a>
                     </div>
                 </div>
-                <div class="tutorial-card">
+                <div class="tutorial-card" data-level="intermediate">
                     <div class="tutorial-header">
                         <i class="fas fa-chart-bar"></i>
                         <span class="tutorial-level level-intermediate">Intermédiaire</span>
@@ -156,7 +156,7 @@
                         <a href="#" class="btn-start"><i class="fas fa-play"></i> Continuer</a>
                     </div>
                 </div>
-                <div class="tutorial-card">
+                <div class="tutorial-card" data-level="advanced">
                     <div class="tutorial-header">
                         <i class="fas fa-code"></i>
                         <span class="tutorial-level level-advanced">Avancé</span>
@@ -172,7 +172,7 @@
                         <a href="#" class="btn-start"><i class="fas fa-play"></i> Commencer</a>
                     </div>
                 </div>
-                <div class="tutorial-card">
+                <div class="tutorial-card" data-level="advanced">
                     <div class="tutorial-header">
                         <i class="fas fa-cogs"></i>
                         <span class="tutorial-level level-advanced">Avancé</span>
@@ -193,5 +193,45 @@
         <footer><p>&copy; 2025 FindIN. Tous droits réservés.</p></footer>
     </div>
     <script src="/assets/js/main.js"></script>
+        <footer><p>© 2025 FindIN. Tous droits réservés.</p></footer>
+</div>
+
+<script src="/assets/js/main.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabs = document.querySelectorAll('.level-tab');
+    const cards = document.querySelectorAll('.tutorial-card');
+
+    function applyFilter(filter) {
+        cards.forEach(card => {
+            if (filter === 'all' || card.dataset.level === filter) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const text = tab.textContent.toLowerCase();
+
+            let filter = 'all';
+            if (text.includes('tous')) filter = 'all';
+            else if (text.includes('débutant')) filter = 'beginner';
+            else if (text.includes('intermédiaire')) filter = 'intermediate';
+            else if (text.includes('avancé')) filter = 'advanced';
+
+            applyFilter(filter);
+        });
+    });
+
+    applyFilter('all');
+});
+</script>
 </body>
 </html>
