@@ -148,50 +148,51 @@ class GoogleAuthController {
      * Gère la création/connexion de l'utilisateur
      */
     private function handleUser($googleUser) {
-        require_once __DIR__ . '/../models/Database.php';
-        require_once __DIR__ . '/../models/User.php';
+        require_once __DIR__ . '/../Models/Database.php';
+        require_once __DIR__ . '/../Models/User.php';
         
         $db = Database::getInstance();
         $email = $googleUser['email'];
         
-        // Vérifier si l'utilisateur existe déjà
-        $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+        // Vérifier si l'utilisateur existe dans utilisateurs
+        $stmt = $db->prepare("SELECT * FROM utilisateurs WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($user) {
             // Utilisateur existant - Mettre à jour le google_id si nécessaire
             if (empty($user['google_id'])) {
-                $updateStmt = $db->prepare("UPDATE users SET google_id = ?, updated_at = NOW() WHERE id = ?");
-                $updateStmt->execute([$googleUser['sub'], $user['id']]);
+                $updateStmt = $db->prepare("UPDATE utilisateurs SET google_id = ? WHERE id_utilisateur = ?");
+                $updateStmt->execute([$googleUser['sub'], $user['id_utilisateur']]);
             }
         } else {
             // Nouvel utilisateur - Créer le compte
             $prenom = $googleUser['given_name'] ?? '';
             $nom = $googleUser['family_name'] ?? '';
             $avatar = $googleUser['picture'] ?? null;
+            $uuid = $this->generateUUID();
             
             $insertStmt = $db->prepare("
-                INSERT INTO users (email, prenom, nom, google_id, avatar_url, role, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, ?, 'employe', NOW(), NOW())
+                INSERT INTO utilisateurs (id_utilisateur, email, prenom, nom, google_id, photo, role) 
+                VALUES (?, ?, ?, ?, ?, ?, 'employe')
             ");
-            $insertStmt->execute([$email, $prenom, $nom, $googleUser['sub'], $avatar]);
+            $insertStmt->execute([$uuid, $email, $prenom, $nom, $googleUser['sub'], $avatar]);
             
             // Récupérer le nouvel utilisateur
-            $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+            $stmt = $db->prepare("SELECT * FROM utilisateurs WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
         }
         
         // Connecter l'utilisateur
-        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_id'] = $user['id_utilisateur'];
         $_SESSION['user'] = [
-            'id' => $user['id'],
+            'id' => $user['id_utilisateur'],
             'email' => $user['email'],
             'prenom' => $user['prenom'],
             'nom' => $user['nom'],
             'role' => $user['role'],
-            'avatar_url' => $user['avatar_url'] ?? null
+            'avatar_url' => $user['photo'] ?? null
         ];
         
         // Nettoyer le state
@@ -200,5 +201,12 @@ class GoogleAuthController {
         // Rediriger vers le dashboard
         header('Location: /dashboard');
         exit;
+    }
+    
+    private function generateUUID() {
+        $data = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }

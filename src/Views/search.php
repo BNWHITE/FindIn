@@ -2,7 +2,7 @@
 require_once __DIR__ . '/layouts/header.php';
 require_once __DIR__ . '/../lib/upload_utils.php';
 require_once __DIR__ . '/../lib/cv_parser.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../Config/database.php';
 
 // Quick search page & CV uploader to create candidate profiles
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['cv'])) {

@@ -1,110 +1,65 @@
-<<<<<<< HEAD
-# Configuration locale
-config/database.php
+# =============================================================================
+# FindIN .gitignore
+# =============================================================================
 
-# Fichiers uploadés
-public/uploads/*
-!public/uploads/.gitkeep
+# Environnement et secrets - CRITIQUE
+.env
+.env.local
+.env.production
+*.pem
+src/Config/database.php
+
+# IDE et éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Système
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Dépendances
+/vendor/
+/node_modules/
+composer.lock
 
 # Logs et cache
 storage/logs/*
 !storage/logs/.gitkeep
 storage/cache/*
 !storage/cache/.gitkeep
+*.log
+
+# Base de données locale
+*.sqlite
+*.sqlite3
+storage/database/*.sqlite
+
+# Uploads utilisateurs
+public/uploads/*
+!public/uploads/.gitkeep
+uploads/*
+!uploads/.gitkeep
 
 # Backups
 database/backups/*
 !database/backups/.gitkeep
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Composer
-/vendor/
-composer.lock
-
-# Archive
+# Archives
 archive/
-=======
-# ======================
-# FindIn - .gitignore
-# ======================
 
-# Système
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-Thumbs.db
-
-# IDE / Éditeurs
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.project
-.settings/
-
-# PHP / Composer
-/vendor/
-composer.lock
-
-# Logs
-*.log
-logs/
-/logs
-
-# Cache
-/cache/
-*.cache
-.php_cs.cache
-
-# Environnement
-.env
-.env.local
-.env.*.local
-config/local.php
-
-# Uploads utilisateurs (garder le dossier, ignorer le contenu)
-uploads/*
-!uploads/.gitkeep
-
-# Base de données
-*.sqlite
-*.sqlite3
-*.db
-database.sqlite
-
-# SSL / Certificats
-ssl/
-*.pem
-*.crt
-*.key
-
-# Fichiers temporaires
+# Build et temporaires
+/dist/
+/build/
 *.tmp
 *.temp
-*.bak
-*.backup
 
 # Tests
-/tests/
-coverage/
-
-# Documentation générée
-/docs/generated/
-
-# OS générés
-ehthumbs.db
-Desktop.ini
->>>>>>> origin/main
+/coverage/
+.phpunit.result.cache

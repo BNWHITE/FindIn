@@ -13,30 +13,20 @@ class AuthController {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
-            require_once __DIR__ . '/../config/database.php';
-            require_once __DIR__ . '/../models/Database.php';
-            // Essayer d'abord la table users, sinon utilisateurs
-            $stmt = Database::query('SELECT * FROM users WHERE email = ?', [$email]);
-            $user = $stmt->fetch();
-            $useUsersTable = true;
+            require_once __DIR__ . '/../Config/database.php';
+            require_once __DIR__ . '/../Models/Database.php';
             
-            if (!$user) {
-                $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
-                $user = $stmt->fetch();
-                $useUsersTable = false;
-            }
+            // Utiliser uniquement la table utilisateurs
+            $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
+            $user = $stmt->fetch();
 
             if ($user) {
-                // Récupérer le mot de passe selon la table
-                $stored = $useUsersTable ? ($user['password'] ?? null) : ($user['mot_de_passe'] ?? null);
+                // Récupérer le mot de passe
+                $stored = $user['mot_de_passe'] ?? null;
                 if (empty($stored)) {
                     // Accepter connexion et set mot de passe
                     $hash = password_hash($password, PASSWORD_DEFAULT);
-                    if ($useUsersTable) {
-                        Database::query('UPDATE users SET password = ? WHERE email = ?', [$hash, $email]);
-                    } else {
-                        Database::query('UPDATE utilisateurs SET mot_de_passe = ? WHERE email = ?', [$hash, $email]);
-                    }
+                    Database::query('UPDATE utilisateurs SET mot_de_passe = ? WHERE email = ?', [$hash, $email]);
                 } else {
                     if (!password_verify($password, $stored)) {
                         // Mauvais mot de passe -> afficher login
@@ -56,11 +46,11 @@ class AuthController {
                 $this->showDashboard();
                 return;
             } else {
-                // Aucun utilisateur -> créer dans la table users
+                // Aucun utilisateur -> créer dans la table utilisateurs
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                Database::query('INSERT INTO users (email, password, prenom, nom, role) VALUES (?, ?, ?, ?, ?)', [$email, $hash, '', '', 'employe']);
-                $db = Database::getInstance();
-                $_SESSION['user_id'] = $db->lastInsertId();
+                $uuid = $this->generateUUID();
+                Database::query('INSERT INTO utilisateurs (id, email, mot_de_passe, prenom, nom, role) VALUES (?, ?, ?, ?, ?, ?)', [$uuid, $email, $hash, '', '', 'employe']);
+                $_SESSION['user_id'] = $uuid;
 
                 $_SESSION['user_email'] = $email;
                 $_SESSION['user_name'] = $email;
@@ -111,16 +101,11 @@ class AuthController {
                 return;
             }
 
-            // Vérifier existence dans les deux tables
-            require_once __DIR__ . '/../config/database.php';
-            require_once __DIR__ . '/../models/Database.php';
-            $stmt = Database::query('SELECT * FROM users WHERE email = ?', [$email]);
+            // Vérifier existence dans la table utilisateurs
+            require_once __DIR__ . '/../Config/database.php';
+            require_once __DIR__ . '/../Models/Database.php';
+            $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
             $user = $stmt->fetch();
-            
-            if (!$user) {
-                $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
-                $user = $stmt->fetch();
-            }
 
             if ($user) {
                 $data['error'] = 'Un compte existe déjà avec cet e-mail.';
@@ -131,10 +116,10 @@ class AuthController {
             // Hash mot de passe
             $hash = password_hash($password, PASSWORD_DEFAULT);
 
-            // Insérer dans la table users (table principale)
-            Database::query('INSERT INTO users (email, password, prenom, nom, departement, role) VALUES (?, ?, ?, ?, ?, ?)', [$email, $hash, $prenom, $nom, $departement, 'employe']);
-            $db = Database::getInstance();
-            $_SESSION['user_id'] = $db->lastInsertId();
+            // Insérer dans la table utilisateurs
+            $uuid = $this->generateUUID();
+            Database::query('INSERT INTO utilisateurs (id, email, mot_de_passe, prenom, nom, id_departement, role) VALUES (?, ?, ?, ?, ?, ?, ?)', [$uuid, $email, $hash, $prenom, $nom, $departement, 'employe']);
+            $_SESSION['user_id'] = $uuid;
 
             $_SESSION['user_email'] = $email;
             $_SESSION['user_name'] = $prenom . ' ' . $nom;

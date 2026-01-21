@@ -1,11 +1,9 @@
 <?php
-<<<<<<< HEAD:src/Models/User.php
-// models/User.php - VERSION SQLITE CORRIGÉE
+/**
+ * User.php - Modèle utilisateur
+ * Compatible MySQL/SQLite/PostgreSQL (Supabase)
+ */
 require_once __DIR__ . '/Database.php';
-=======
-// models/User.php - VERSION COMPLETE AVEC GESTION RH/MANAGER
-require_once 'models/Database.php';
->>>>>>> origin/main:models/User.php
 
 class User {
     private $db;
@@ -129,13 +127,17 @@ class User {
         $sql = "SELECT dv.*, u.prenom, u.nom, u.email, c.nom as competence_nom 
                 FROM demandes_validation dv
                 JOIN utilisateurs u ON dv.user_id = u.id_utilisateur
-                JOIN competences c ON dv.competence_id = c.id
+                JOIN competences c ON dv.competence_id = c.id_competence
                 WHERE dv.statut = 'en_attente' 
                 AND u.manager_id = :manager_id
                 ORDER BY dv.date_demande DESC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':manager_id' => $managerId]);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':manager_id' => $managerId]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     public function validateCompetence($validationId, $managerId, $statut, $commentaire = null) {
@@ -143,7 +145,7 @@ class User {
                 statut = :statut, 
                 manager_id = :manager_id,
                 commentaire = :commentaire,
-                date_validation = NOW()
+                date_validation = CURRENT_TIMESTAMP
                 WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
@@ -155,10 +157,12 @@ class User {
 
         // Si approuvé, mettre à jour user_competences
         if ($result && $statut === 'approuve') {
-            $demande = $this->db->query("SELECT * FROM demandes_validation WHERE id = $validationId")->fetch();
+            $stmt_demande = $this->db->prepare("SELECT * FROM demandes_validation WHERE id = :id");
+            $stmt_demande->execute([':id' => $validationId]);
+            $demande = $stmt_demande->fetch();
             if ($demande) {
-                $sql2 = "UPDATE user_competences SET validee = 1, valide_par = :manager_id, date_validation = NOW() 
-                         WHERE user_id = :user_id AND competence_id = :comp_id";
+                $sql2 = "UPDATE competences_utilisateurs SET niveau_valide = niveau_declare, id_manager_validateur = :manager_id, date_validation = CURRENT_TIMESTAMP 
+                         WHERE user_id = :user_id AND id_competence = :comp_id";
                 $stmt2 = $this->db->prepare($sql2);
                 $stmt2->execute([
                     ':manager_id' => $managerId,
@@ -171,15 +175,19 @@ class User {
     }
 
     public function getTeamCompetences($managerId) {
-        $sql = "SELECT u.id_utilisateur, u.prenom, u.nom, c.nom as competence, uc.niveau_declare, uc.validee
+        $sql = "SELECT u.id_utilisateur, u.prenom, u.nom, c.nom as competence, cu.niveau_declare, cu.niveau_valide
                 FROM utilisateurs u
-                JOIN user_competences uc ON u.id_utilisateur = uc.user_id
-                JOIN competences c ON uc.competence_id = c.id
+                JOIN competences_utilisateurs cu ON u.id_utilisateur = cu.user_id
+                JOIN competences c ON cu.id_competence = c.id_competence
                 WHERE u.manager_id = :manager_id
                 ORDER BY u.nom, c.nom";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':manager_id' => $managerId]);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':manager_id' => $managerId]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     // ========== FONCTIONS EMPLOYE ==========
@@ -198,23 +206,31 @@ class User {
     public function getMyValidationRequests($userId) {
         $sql = "SELECT dv.*, c.nom as competence_nom 
                 FROM demandes_validation dv
-                JOIN competences c ON dv.competence_id = c.id
+                JOIN competences c ON dv.competence_id = c.id_competence
                 WHERE dv.user_id = :user_id
                 ORDER BY dv.date_demande DESC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':user_id' => $userId]);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':user_id' => $userId]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     // ========== STATS ADMIN ==========
     
     public function getStats() {
         $stats = [];
-        $stats['total_users'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs")->fetchColumn();
-        $stats['employes'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs WHERE role = 'employe'")->fetchColumn();
-        $stats['managers'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs WHERE role = 'manager'")->fetchColumn();
-        $stats['rh'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs WHERE role = 'rh'")->fetchColumn();
-        $stats['pending_validations'] = $this->db->query("SELECT COUNT(*) FROM demandes_validation WHERE statut = 'en_attente'")->fetchColumn();
+        try {
+            $stats['total_users'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs")->fetchColumn();
+            $stats['employes'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs WHERE role = 'employe'")->fetchColumn();
+            $stats['managers'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs WHERE role = 'manager'")->fetchColumn();
+            $stats['rh'] = $this->db->query("SELECT COUNT(*) FROM utilisateurs WHERE role = 'rh'")->fetchColumn();
+            $stats['pending_validations'] = 0;
+        } catch (Exception $e) {
+            $stats = ['total_users' => 0, 'employes' => 0, 'managers' => 0, 'rh' => 0, 'pending_validations' => 0];
+        }
         return $stats;
     }
 
@@ -226,12 +242,31 @@ class User {
     }
 
     public function getDepartments() {
-        $sql = "SELECT * FROM departments ORDER BY name";
+        $sql = "SELECT * FROM departements ORDER BY nom";
         try {
             return $this->db->query($sql)->fetchAll();
         } catch (Exception $e) {
             return [];
         }
+    }
+
+    public function getUserByEmail($email) {
+        $sql = "SELECT * FROM utilisateurs WHERE email = :email";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':email' => $email]);
+        return $stmt->fetch();
+    }
+
+    public function updatePassword($userId, $newPassword) {
+        $sql = "UPDATE utilisateurs SET mot_de_passe = :password WHERE id_utilisateur = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':password' => password_hash($newPassword, PASSWORD_DEFAULT), ':id' => $userId]);
+    }
+
+    public function updatePhoto($userId, $photoPath) {
+        $sql = "UPDATE utilisateurs SET photo = :photo WHERE id_utilisateur = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':photo' => $photoPath, ':id' => $userId]);
     }
 }
 ?>

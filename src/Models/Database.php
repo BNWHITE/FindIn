@@ -1,18 +1,35 @@
 <?php
-// models/Database.php - VERSION ULTRA SIMPLE
+// models/Database.php - Support MySQL, SQLite, Supabase (PostgreSQL)
 class Database {
     private static $instance = null;
     private $connection;
 
     private function __construct() {
         try {
-            // Support SQLite ou MySQL selon config
-            if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+            $dbType = defined('DB_TYPE') ? DB_TYPE : 'sqlite';
+            
+            if ($dbType === 'supabase') {
+                // Supabase PostgreSQL
+                $dsn = sprintf(
+                    'pgsql:host=%s;port=%s;dbname=%s;sslmode=require',
+                    SUPABASE_HOST,
+                    SUPABASE_PORT,
+                    SUPABASE_DB
+                );
+                $this->connection = new PDO($dsn, SUPABASE_USER, SUPABASE_PASS, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]);
+                // Tables already exist in Supabase, no need to create
+                
+            } elseif ($dbType === 'mysql') {
                 $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_PORT, DB_NAME);
                 $this->connection = new PDO($dsn, DB_USER, DB_PASS, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
+                $this->createMinimalTables();
+                
             } else {
                 // Par défaut SQLite
                 $dbPath = defined('DB_PATH') ? DB_PATH : (__DIR__ . '/../../storage/database/database.sqlite');
@@ -30,10 +47,8 @@ class Database {
                 $this->connection = new PDO("sqlite:$dbPath");
                 $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $this->connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                $this->createMinimalTables();
             }
-
-            // Créer les tables minimales
-            $this->createMinimalTables();
 
         } catch (PDOException $e) {
             // Message d'erreur simple
@@ -46,8 +61,15 @@ class Database {
     }
 
     private function createMinimalTables() {
+        $dbType = defined('DB_TYPE') ? DB_TYPE : 'sqlite';
+        
+        // Skip for Supabase - tables are managed via SQL Editor
+        if ($dbType === 'supabase') {
+            return;
+        }
+        
         // Table utilisateurs (minimale)
-        if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+        if ($dbType === 'mysql') {
             $sql = "CREATE TABLE IF NOT EXISTS utilisateurs (
                 id_utilisateur CHAR(36) NOT NULL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,

@@ -1,0 +1,3 @@
+# Dépendances pour le serveur MCP FindIN
+mcp>=0.9.0
+mysql-connector-python>=8.0.0

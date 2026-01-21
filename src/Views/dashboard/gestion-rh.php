@@ -2,9 +2,9 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../models/Database.php';
-require_once __DIR__ . '/../../models/User.php';
+require_once __DIR__ . '/../../Config/database.php';
+require_once __DIR__ . '/../../Models/Database.php';
+require_once __DIR__ . '/../../Models/User.php';
 
 $db = Database::getInstance();
 $userModel = new User();

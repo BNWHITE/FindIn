@@ -3,8 +3,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
 
 // Récupérer les infos utilisateur
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../models/Database.php';
+require_once __DIR__ . '/../../Config/database.php';
+require_once __DIR__ . '/../../Models/Database.php';
 $db = Database::getInstance();
 
 $user_id = $_SESSION['user_id'];
@@ -15,19 +15,13 @@ $documents = [];
 $stats = ['competences' => 0, 'projets' => 0, 'certifications' => 0, 'documents' => 0];
 
 try {
-    // Infos utilisateur - essayer les deux tables
-    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+    // Infos utilisateur - table utilisateurs uniquement
+    $stmt = $db->prepare("SELECT * FROM utilisateurs WHERE id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$user) {
-        $stmt = $db->prepare("SELECT *, id_utilisateur as id FROM utilisateurs WHERE id_utilisateur = ?");
-        $stmt->execute([$user_id]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-    
-    // Compétences depuis user_competences
-    $stmt = $db->prepare("SELECT c.*, uc.niveau_declare as level FROM user_competences uc JOIN competences c ON uc.competence_id = c.id WHERE uc.user_id = ? ORDER BY uc.niveau_declare DESC LIMIT 6");
+    // Compétences depuis competences_utilisateurs
+    $stmt = $db->prepare("SELECT c.*, cu.niveau_declare as level FROM competences_utilisateurs cu JOIN competences c ON cu.competence_id = c.id WHERE cu.user_id = ? ORDER BY cu.niveau_declare DESC LIMIT 6");
     $stmt->execute([$user_id]);
     $competences = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $stats['competences'] = count($competences);

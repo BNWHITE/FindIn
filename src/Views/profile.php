@@ -1,6 +1,6 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/layouts/header.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../Config/database.php';
 require_once __DIR__ . '/../lib/upload_utils.php';
 require_once __DIR__ . '/../lib/cv_parser.php';
 

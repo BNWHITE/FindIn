@@ -1,7 +1,7 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
 require_once __DIR__ . '/../views/layouts/header.php';
-require_once __DIR__ . '/../models/Database.php';
+require_once __DIR__ . '/../Models/Database.php';
 
 $db = \Database::getInstance();
 $total_employees = 0;

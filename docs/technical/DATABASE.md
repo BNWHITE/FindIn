@@ -83,9 +83,29 @@ CREATE TABLE competences (
 
 ---
 
-### 🔗 competences_utilisateurs
-Table de liaison entre utilisateurs et compétences avec niveaux.
+### 🔗 Tables de liaison Utilisateurs-Compétences
 
+> ⚠️ **Architecture dual-table** : Le projet maintient deux tables parallèles pour la rétrocompatibilité.
+
+#### Table `user_competences` (Moderne - Anglais)
+```sql
+CREATE TABLE user_competences (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    competence_id INT NOT NULL,
+    niveau_declare TINYINT(1) DEFAULT 1,
+    niveau_valide TINYINT(1) DEFAULT NULL,
+    manager_id CHAR(36) DEFAULT NULL,
+    date_declaration TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_validation TIMESTAMP NULL DEFAULT NULL,
+    
+    INDEX idx_user (user_id),
+    INDEX idx_competence (competence_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+#### Table `competences_utilisateurs` (Legacy - Français)
 ```sql
 CREATE TABLE competences_utilisateurs (
     id_comp_utilisateur CHAR(36) PRIMARY KEY DEFAULT (UUID()),

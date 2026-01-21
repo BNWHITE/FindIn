@@ -1,9 +1,10 @@
 <?php
-// controllers/DashboardController.php - VERSION CORRIGÉE
+// controllers/DashboardController.php
+require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../Models/User.php';
 require_once __DIR__ . '/../Models/Competence.php';
 
-class DashboardController {
+class DashboardController extends BaseController {
     private $userModel;
     private $competenceModel;
 
@@ -72,21 +73,8 @@ class DashboardController {
             error_log("Erreur Dashboard: " . $e->getMessage());
         }
         
-        // Afficher la vue
+        // Afficher la vue via BaseController
         $this->view('dashboard/index', $data);
-    }
-
-    private function view($view, $data = []) {
-        extract($data);
-        $viewFile = "views/$view.php";
-        if (file_exists($viewFile)) {
-            require_once $viewFile;
-        } else {
-            // Vue d'erreur
-            echo "<h1>Erreur : Vue non trouvée</h1>";
-            echo "<p>La vue '$view' n'existe pas.</p>";
-            echo '<a href="/">Retour à l\'accueil</a>';
-        }
     }
 }
 ?>

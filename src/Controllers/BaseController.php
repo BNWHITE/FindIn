@@ -7,12 +7,19 @@ class BaseController {
         extract($data);
         
         // Chemin vers le fichier de vue
-        $viewFile = 'views/' . $view . '.php';
+        $viewFile = __DIR__ . '/../Views/' . $view . '.php';
         
         if (file_exists($viewFile)) {
             require_once $viewFile;
         } else {
-            die("Vue non trouvée: $viewFile");
+            // Afficher une erreur plus conviviale
+            http_response_code(404);
+            echo "<!DOCTYPE html><html><head><title>Erreur</title></head><body>";
+            echo "<h1>Erreur : Vue non trouvée</h1>";
+            echo "<p>La vue '$view' n'existe pas.</p>";
+            echo "<p><a href='/'>Retour à l'accueil</a></p>";
+            echo "</body></html>";
+            exit;
         }
     }
     

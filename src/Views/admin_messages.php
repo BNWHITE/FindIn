@@ -5,8 +5,8 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
     exit;
 }
 require_once __DIR__ . '/../views/layouts/header.php';
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Database.php';
+require_once __DIR__ . '/../Config/database.php';
+require_once __DIR__ . '/../Models/Database.php';
 
 $db = \Database::getInstance();
 
