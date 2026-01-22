@@ -1,17 +1,10 @@
 <?php 
 if (session_status() === PHP_SESSION_NONE) session_start();
-$success = $error = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $subject = trim($_POST['subject'] ?? '');
-    $message = trim($_POST['message'] ?? '');
-    if ($name && $email && $message) {
-        $success = "Merci ! Votre message a été envoyé. Nous vous répondrons sous 48h.";
-    } else {
-        $error = "Veuillez remplir tous les champs obligatoires.";
-    }
-}
+// Les variables $message, $error et $success viennent du contrôleur via la fonction view()
+$success = $success ?? false;
+$error = $error ?? '';
+$message = $message ?? '';
+$_POST_saved = $_POST;
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
@@ -99,31 +92,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="contact-form">
-            <?php if ($success): ?><div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success) ?></div><?php endif; ?>
-            <?php if ($error): ?><div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
+            <?php if ($success): ?><div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($message) ?></div><?php endif; ?>
+            <?php if (!$success && $error): ?><div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
             <form method="POST">
                 <div class="form-group">
                     <label for="name">Nom complet *</label>
-                    <input type="text" id="name" name="name" class="form-control" placeholder="Jean Dupont" required>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Jean Dupont" value="<?= htmlspecialchars($_POST_saved['name'] ?? '') ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="vous@entreprise.com" required>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="vous@entreprise.com" value="<?= htmlspecialchars($_POST_saved['email'] ?? '') ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="subject">Sujet</label>
-                    <select id="subject" name="subject" class="form-control">
-                        <option value="">Sélectionner...</option>
-                        <option value="demo">Demande de démo</option>
-                        <option value="support">Support technique</option>
-                        <option value="sales">Commercial</option>
-                        <option value="partnership">Partenariat</option>
-                        <option value="other">Autre</option>
-                    </select>
+                    <label for="subject">Sujet *</label>
+                    <input type="text" id="subject" name="subject" class="form-control" placeholder="Sujet de votre demande" value="<?= htmlspecialchars($_POST_saved['subject'] ?? '') ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="message">Message *</label>
-                    <textarea id="message" name="message" class="form-control" placeholder="Votre message..." required></textarea>
+                    <textarea id="message" name="message" class="form-control" placeholder="Votre message..." required><?= htmlspecialchars($_POST_saved['message'] ?? '') ?></textarea>
                 </div>
                 <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Envoyer le message</button>
             </form>

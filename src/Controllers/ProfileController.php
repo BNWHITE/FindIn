@@ -98,5 +98,12 @@ class ProfileController extends BaseController {
         
         $this->view('profile/competences', $data);
     }
+
+    public function index() {
+        $user = $this->userModel->getUserById($_SESSION['user_id']);
+        
+        $data = ['user' => $user, 'title' => 'Mon Profil'];
+        $this->view('profile/index', $data);
+    }
 }
 ?>

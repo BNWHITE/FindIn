@@ -1,5 +1,11 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /FindIn/public/
+    
+    # Forcer le trailing slash pour les répertoires
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^(.+)$ $1/ [L,R=301]
     
     # Rediriger toutes les requêtes vers index.php sauf les fichiers existants
     RewriteCond %{REQUEST_FILENAME} !-f

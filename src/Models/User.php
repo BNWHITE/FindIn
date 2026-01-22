@@ -1,10 +1,7 @@
 <?php
 /**
  * User.php - Modèle utilisateur
- * Compatible MySQL/SQLite/PostgreSQL (Supabase)
  */
-require_once __DIR__ . '/Database.php';
-
 class User {
     private $db;
 
@@ -50,12 +47,11 @@ class User {
     // ========== FONCTIONS RH ==========
     
     public function createUser($data) {
-        $id = $data['id'] ?? uniqid('user-');
-        $sql = "INSERT INTO utilisateurs (id_utilisateur, email, prenom, nom, mot_de_passe, role, manager_id) 
-                VALUES (:id, :email, :prenom, :nom, :password, :role, :manager_id)";
+        // Ne pas spécifier l'ID - MySQL va auto-générer via AUTO_INCREMENT
+        $sql = "INSERT INTO utilisateurs (email, prenom, nom, mot_de_passe, role, manager_id) 
+                VALUES (:email, :prenom, :nom, :password, :role, :manager_id)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
-            ':id' => $id,
             ':email' => $data['email'],
             ':prenom' => $data['prenom'],
             ':nom' => $data['nom'],
@@ -251,10 +247,14 @@ class User {
     }
 
     public function getUserByEmail($email) {
-        $sql = "SELECT * FROM utilisateurs WHERE email = :email";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':email' => $email]);
-        return $stmt->fetch();
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM utilisateurs WHERE email = ?");
+            $stmt->execute([$email]);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            error_log("Erreur getUserByEmail: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function updatePassword($userId, $newPassword) {

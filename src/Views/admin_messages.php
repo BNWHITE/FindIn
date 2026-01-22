@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 require_once __DIR__ . '/../views/layouts/header.php';
 require_once __DIR__ . '/../Config/database.php';
-require_once __DIR__ . '/../Models/Database.php';
+require_once __DIR__ . '/../Config/database.php';
 
 $db = \Database::getInstance();
 

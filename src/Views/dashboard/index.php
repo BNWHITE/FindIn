@@ -3,8 +3,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
 
 // Récupérer les infos utilisateur
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../models/Database.php';
+require_once __DIR__ . '/../../Config/database.php';
 $db = Database::getInstance();
 
 $user_id = $_SESSION['user_id'];

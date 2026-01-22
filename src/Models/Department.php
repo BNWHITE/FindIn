@@ -1,7 +1,7 @@
 <?php
-// models/Department.php
-require_once __DIR__ . '/Database.php';
-
+/**
+ * Department.php
+ */
 class Department {
     private $db;
 

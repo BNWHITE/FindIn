@@ -148,7 +148,7 @@ class GoogleAuthController {
      * Gère la création/connexion de l'utilisateur
      */
     private function handleUser($googleUser) {
-        require_once __DIR__ . '/../Models/Database.php';
+        require_once __DIR__ . '/../Config/database.php';
         require_once __DIR__ . '/../Models/User.php';
         
         $db = Database::getInstance();

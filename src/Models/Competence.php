@@ -1,7 +1,7 @@
 <?php
-// models/Competence.php - VERSION SQLITE CORRIGÉE
-require_once __DIR__ . '/Database.php';
-
+/**
+ * Competence.php
+ */
 class Competence {
     private $db;
 

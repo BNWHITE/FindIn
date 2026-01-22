@@ -1,7 +1,7 @@
 <?php
-// models/Validation.php
-require_once __DIR__ . '/Database.php';
-
+/**
+ * Validation.php
+ */
 class Validation {
     private $db;
 

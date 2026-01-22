@@ -1,46 +1,36 @@
 <?php
-// controllers/BaseController.php
+/**
+ * BaseController.php - Contrôleur de base
+ */
 class BaseController {
     
-    protected function view($view, $data = []) {
-        // Extraire les données pour les rendre accessibles dans la vue
+    protected function view($path, $data = []) {
         extract($data);
-        
-        // Chemin vers le fichier de vue
-        $viewFile = __DIR__ . '/../Views/' . $view . '.php';
-        
-        if (file_exists($viewFile)) {
-            require_once $viewFile;
-        } else {
-            // Afficher une erreur plus conviviale
-            http_response_code(404);
-            echo "<!DOCTYPE html><html><head><title>Erreur</title></head><body>";
-            echo "<h1>Erreur : Vue non trouvée</h1>";
-            echo "<p>La vue '$view' n'existe pas.</p>";
-            echo "<p><a href='/'>Retour à l'accueil</a></p>";
-            echo "</body></html>";
+        $file = __DIR__ . '/../Views/' . $path . '.php';
+        if (!file_exists($file)) {
+            http_response_code(500);
+            die("❌ Vue non trouvée: {$file}");
+        }
+        require_once $file;
+    }
+
+    protected function checkAuth() {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /FindIn/public/login');
             exit;
         }
     }
-    
-    protected function checkAuth() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit();
-        }
-    }
-    
-    protected function checkRole($allowedRoles) {
-        $this->checkAuth();
-        
-        if (!in_array($_SESSION['user_role'], $allowedRoles)) {
-            die("Accès non autorisé");
-        }
-    }
-    
+
     protected function redirect($url) {
-        header("Location: $url");
-        exit();
+        header("Location: {$url}");
+        exit;
+    }
+
+    protected function jsonResponse($data, $code = 200) {
+        http_response_code($code);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
     }
 }
 ?>
